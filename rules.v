@@ -1354,38 +1354,156 @@ Qed.
 
 (********* SIMPLIFY_LT ************)
 
+(* ;; Before: ((_0 * c0) < c1) After : (_0 < fold((((c1 + c0) - 1) / c0)));; Pred  : (c0 > 0) *)
+(* rewrite(x * c0 < c1, x < fold((c1 + c0 - 1) / c0), c0 > 0) *)
+Lemma ltline140 : forall x c0 c1, c0 > 0 -> x * c0 < c1 == x < (c1 + c0 - 1)/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (c1 < (_0 * c0)) After : (fold((c1 / c0)) < _0);; Pred  : (c0 > 0) *)
+(* rewrite(c1 < x * c0, fold(c1 / c0) < x, c0 > 0) *)
+Lemma ltline142 : forall x c0 c1, c0 > 0 -> c1 < x * c0 == (c1 / c0) < x.
+Proof.
+Admitted.
+
+
+(* ;; Before: ((_0 / c0) < c1) After : (_0 < (c1 * c0));; Pred  : (c0 > 0) *)
+(* rewrite(x / c0 < c1, x < c1 * c0, c0 > 0) *)
+Lemma ltline145 : forall x c0 c1, c0 > 0 -> x/c0 < c1, x < c1*c0.
+Proof.
+Admitted.
+
 (* ;; Before: ((_0 * c0) < ((_1 * c0) + c1)) After : (_0 < (_1 + fold((((c1 + c0) - 1) / c0))));; Pred  : (c0 > 0) *)
-(* rewrite(x * c0 < y * c1, x < y * fold(c1 / c0), c1 % c0 == 0 && c0 > 0) *)
-Lemma ltline223 : forall x y c0 c1, c0 > 0 -> c1 mod c0 == 0 -> x * c0 < y * c1 == x < y * (c1 / c0).
+(* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0) *)
+Lemma ltline226 : forall x y c0 c1, c0 > 0 -> x * c0 < y * c0 + c1 == x < y + ((c1 + c0) - 1).
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 * c0) + c1) < (_1 * c0)) After : ((_0 + fold((c1 / c0))) < _1);; Pred  : (c0 > 0) *)
+(* rewrite(x * c0 + c1 < y * c0, x + fold(c1/c0) < y, c0 > 0) *)
+Lemma ltline227 : forall x y c0 c1, c0 > 0 -> x * c0 + c1 < y * c0 == x + c1 / c0 < y.
 Proof.
 Admitted.
 
 (* ;; Before: (((_0 + c1) / c0) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
-(* ;; Before: (((_0 + c1) / c0) < ((_0 + c2) / c0)) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
-(* ;; Before: (((_0 * c0) + c1) < (_1 * c0)) After : ((_0 + fold((c1 / c0))) < _1);; Pred  : (c0 > 0) *)
-(* ;; Before: (((_0 + c1) / c0) < ((_0 / c0) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
-(* ;; Before: (((_0 + c1) / c0) < min((_0 / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
-(* ;; Before: (((_0 + c1) / c0) < (min((_0 / c0), _1) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
-(* ;; Before: (((_0 + c1) / c0) < (min(_1, (_0 / c0)) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
-(* ;; Before: (((_0 + c1) / c0) < min(_1, ((_0 + c2) / c0))) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
-(* ;; Before: (((_0 + c1) / c0) < min(_1, (_0 / c0))) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
-(* ;; Before: (((_0 + c1) / c0) < min(((_0 + c2) / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
-(* ;; Before: (c1 < (_0 * c0)) After : (fold((c1 / c0)) < _0);; Pred  : (c0 > 0) *)
-(* ;; Before: (c0 < (_0 / c1)) After : (fold((((c0 + 1) * c1) - 1)) < _0);; Pred  : (c1 > 0) *)
-(* ;; Before: (max((_0 / c0), _1) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c1)) *)
-(* ;; Before: (max(((_0 + c2) / c0), _1) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= 0)) *)
-(* ;; Before: (max(((_0 + c2) / c0), _1) < ((_0 / c0) + c1)) After : 0;; Pred  : ((c0 > 0) && (c2 >= (c1 * c0))) *)
-(* ;; Before: (max(((_0 + c2) / c0), _1) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= c1)) *)
-(* ;; Before: (max(_1, (_0 / c0)) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c1)) *)
-(* ;; Before: (max(_1, ((_0 + c2) / c0)) < ((_0 / c0) + c1)) After : 0;; Pred  : ((c0 > 0) && (c2 >= (c1 * c0))) *)
-(* ;; Before: (max(_1, ((_0 + c2) / c0)) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= c1)) *)
-(* ;; Before: (max(_1, ((_0 + c2) / c0)) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= 0)) *)
-(* ;; Before: ((_0 / c0) < min(((_0 + c2) / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c2 < 0)) *)
-(* ;; Before: ((_0 / c0) < min(_1, ((_0 + c2) / c0))) After : 0;; Pred  : ((c0 > 0) && (c2 < 0)) *)
-(* ;; Before: ((_0 / c0) < ((_0 + c2) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c2)) *)
-(* ;; Before: ((_0 / c0) < c1) After : (_0 < (c1 * c0));; Pred  : (c0 > 0) *)
-(* ;; Before: ((_0 * c0) < c1) After : (_0 < fold((((c1 + c0) - 1) / c0)));; Pred  : (c0 > 0) *)
+(* rewrite((x + c1)/c0 < x/c0, false, c0 > 0 && c1 >= 0) *)
+Lemma ltline295 : forall x c0 c1, c0 > 0 -> c1 >= 0 -> (x + c1) / c0 < x / c0 = false.
+Proof.
+Admitted.
 
+(* ;; Before: (((_0 + c1) / c0) < ((_0 + c2) / c0)) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
+(* rewrite((x + c1)/c0 < (x + c2)/c0, false, c0 > 0 && c1 >= c2) *)
+Lemma ltline289 : forall x c0 c1 c2, c0 > 0 -> c1 >= c2 -> (x + c1) / c0 < (x + c2) / c0 = false.
+Proof.
+Admitted.
+
+(* ;; Before: ((_0 / c0) < ((_0 + c2) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c2)) *)
+(* rewrite(x/c0 < (x + c2)/c0, false, c0 > 0 && 0 >= c2) *)
+Lemma ltline292 : forall x c0 c2, c0 > 0 -> 0 >= c2 -> x/c0 < (x + c2)/c0 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) < ((_0 / c0) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
+(* rewrite((x + c1)/c0 < x/c0 + c2, false, c0 > 0 && c1 >= c2 * c0) *)
+Lemma ltline299 : forall x c0 c1 c2, c0 > 0 -> c1 >= c2 * c0 -> (x + c1) / c0 < x / c0 + c2 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) < (min((_0 / c0), _1) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
+(* rewrite((x + c1)/c0 < (min(x/c0, y) + c2), false, c0 > 0 && c1 >= c2 * c0) *)
+Lemma ltline303 : forall x y c0 c1 c2, c0 > 0 -> c1 >= (c2 * c0) -> (x + c1) / c0 < (min (x / c0) y) + c2 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) < min(((_0 + c2) / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
+(* rewrite((x + c1)/c0 < min((x + c2)/c0, y), false, c0 > 0 && c1 >= c2) *)
+Lemma ltline305 : forall x y c0 c1 c2, c0 > 0 -> c1 >= c2 -> (x + c1) / c0 < (min ((x + c2) / c0), y) = false.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) < min((_0 / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
+(* rewrite((x + c1)/c0 < min(x/c0, y), false, c0 > 0 && c1 >= 0) *)
+Lemma ltline307 : forall x y c0 c1, c0 > 0 -> c1 >= 0 -> (x + c1) / c0 < (min (x / c0) y) = false.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) < (min(_1, (_0 / c0)) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
+(* rewrite((x + c1)/c0 < (min(y, x/c0) + c2), false, c0 > 0 && c1 >= c2 * c0) *)
+Lemma ltline310 : forall x y c0 c1 c2, (x + c1) / c0 < (min y (x / c0)) + c2 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) < min(_1, ((_0 + c2) / c0))) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
+(* rewrite((x + c1)/c0 < min(y, (x + c2)/c0), false, c0 > 0 && c1 >= c2) *)
+Lemma ltline312 : forall x y c0 c1 c2, c0 > 0 -> c1 >= c2 -> (x + c1) / c0 < (min y ((x + c2)/c0)) = false.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) < min(_1, (_0 / c0))) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
+(* rewrite((x + c1)/c0 < min(y, x/c0), false, c0 > 0 && c1 >= 0) *)
+Lemma ltline314 : forall x y c0 c1, c0 > 0 -> c1 >= 0 -> (x + c1) / c0 < (min y (x / c0)) = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max(((_0 + c2) / c0), _1) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= c1)) *)
+(* rewrite(max((x + c2)/c0, y) < (x + c1)/c0, false, c0 > 0 && c2 >= c1) *)
+Lemma ltline317 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 -> (max ((x + c2)/c0) y) < (x + c1) / c0 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max((_0 / c0), _1) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c1)) *)
+(* rewrite(max(x/c0, y) < (x + c1)/c0, false, c0 > 0 && 0 >= c1) *)
+Lemma ltline319 : forall x y c0 c1, (max (x / c0) y) < (x + c1) / c0 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max(_1, ((_0 + c2) / c0)) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= c1)) *)
+(* rewrite(max(y, (x + c2)/c0) < (x + c1)/c0, false, c0 > 0 && c2 >= c1) *)
+Lemma ltline321 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 -> (max y ((x + c2)/c0)) < (x + c1) / c0 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max(_1, (_0 / c0)) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c1)) *)
+(* rewrite(max(y, x/c0) < (x + c1)/c0, false, c0 > 0 && 0 >= c1) *)
+Lemma ltline323 : forall x y c0 c1, c0 > 0 -> 0 >= c1 -> (max y (x/c0)) < (x + c1)/c0 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max(((_0 + c2) / c0), _1) < ((_0 / c0) + c1)) After : 0;; Pred  : ((c0 > 0) && (c2 >= (c1 * c0))) *)
+(* rewrite(max((x + c2)/c0, y) < x/c0 + c1, false, c0 > 0 && c2 >= c1 * c0) *)
+Lemma ltline327 : forall x y c0 c1 c2, c0 > 0 -> c2 >= (c1 * c0) -> (max ((x + c2) / c0) y) < (x / c0) + c1 = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max(_1, ((_0 + c2) / c0)) < ((_0 / c0) + c1)) After : 0;; Pred  : ((c0 > 0) && (c2 >= (c1 * c0))) *)
+(* rewrite(max(y, (x + c2)/c0) < x/c0 + c1, false, c0 > 0 && c2 >= c1 * c0) *)
+Lemma ltline329 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 * c0 -> (max y ((x + c2)/c0)) < x/c0 + c1 = false.
+Proof.
+Admitted.
+
+(* ;; Before: ((_0 / c0) < min(((_0 + c2) / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c2 < 0)) *)
+(* rewrite(x/c0 < min((x + c2)/c0, y), false, c0 > 0 && c2 < 0) *)
+Lemma ltline333 : forall x y c0 c2, c0 > 0 -> c2 < 0 -> x/c0 < (min ((x + c2)/c0) y) = false.
+Proof.
+Admitted. 
+
+(* ;; Before: ((_0 / c0) < min(_1, ((_0 + c2) / c0))) After : 0;; Pred  : ((c0 > 0) && (c2 < 0)) *)
+(* rewrite(x/c0 < min(y, (x + c2)/c0), false, c0 > 0 && c2 < 0) *)
+Lemma ltline335 : forall x y c0 c2, c0 > 0 -> c2 < 0 -> x/c0 < (min y ((x + c2)/c0)) = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max(((_0 + c2) / c0), _1) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= 0)) *)
+(* rewrite(max((x + c2)/c0, y) < x/c0, false, c0 > 0 && c2 >= 0) *)
+Lemma ltline337 : forall x y c0 c2, c0 > 0 -> c2 >= 0 -> (max ((x + c2) / c0) y) < (x / c0) = false.
+Proof.
+Admitted.
+
+(* ;; Before: (max(_1, ((_0 + c2) / c0)) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= 0)) *)
+(* rewrite(max(y, (x + c2)/c0) < x/c0, false, c0 > 0 && c2 >= 0) *)
+Lemma ltline339 : forall x y c0 c2, c0 > 0 -> c2 >= 0 -> (max y ((x + c2)/c0)) < x/c0 = false.
+Proof.
+Admitted.
 
 (********* SIMPLIFY_MAX ************)
 
