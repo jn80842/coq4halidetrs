@@ -1633,41 +1633,198 @@ Admitted.
 
 (********* SIMPLIFY_MOD ************)
 
-(* ;; Before: (((_0 * c0) + _1) % c1) After : (_1 % c1);; Pred  : ((c0 % c1) == 0) *)
 (* ;; Before: ((_0 * c0) % c1) After : ((_0 * fold((c0 % c1))) % c1);; Pred  : ((c1 > 0) && ((c0 >= c1) || (c0 < 0))) *)
-(* ;; Before: ((_0 * c0) % c1) After : ((_0 % fold((c1 / c0))) * c0);; Pred  : ((c0 > 0) && ((c1 % c0) == 0)) *)
+(* rewrite((x * c0) % c1, (x * fold(c0 % c1)) % c1, c1 > 0 && (c0 >= c1 || c0 < 0)) *)
+Lemma modline67 : forall x c0 c1, c1 > 0 -> (c0 >= c1 or c0 < 0) -> (x * c0) mod c1 == (x * (c0 mod c1)) mod c1.
+Proof.
+Admitted.
+
 (* ;; Before: ((_0 + c0) % c1) After : ((_0 + fold((c0 % c1))) % c1);; Pred  : ((c1 > 0) && ((c0 >= c1) || (c0 < 0))) *)
-(* ;; Before: ((_1 - (_0 * c0)) % c1) After : (_1 % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite((x + c0) % c1, (x + fold(c0 % c1)) % c1, c1 > 0 && (c0 >= c1 || c0 < 0)) *)
+Lemma modline68 : forall x c0 c1, c1 > 0 -> (c0 >= c1 or c0 < 0) -> (x + c0) mod c1 == (x + (c0 mod c1)) mod c1.
+Proof.
+Admitted.
+
+(* ;; Before: ((_0 * c0) % c1) After : ((_0 % fold((c1 / c0))) * c0);; Pred  : ((c0 > 0) && ((c1 % c0) == 0)) *)
+(* rewrite((x * c0) % c1, (x % fold(c1/c0)) * c0, c0 > 0 && c1 % c0 == 0) *)
+Lemma modline69 : forall x c0 c1, c0 > 0 -> c0 == 0 -> (x * c0) mod c1 == (x mod (c1/c0))*c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 * c0) + _1) % c1) After : (_1 % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite((x * c0 + y) % c1, y % c1, c0 % c1 == 0) *)
+Lemma modline70 : forall x y c0 c1, c0 mod c1 == 0 -> (x * c0 + y) mod c1 == y mod c1.
+Proof.
+Admitted.
+
 (* ;; Before: ((_1 + (_0 * c0)) % c1) After : (_1 % c1);; Pred  : ((c0 % c1) == 0) *)
-(* ;; Before: (ramp(_0, c0) % broadcast(c1)) After : (broadcast(_0, 1) % c1);; Pred  : ((c0 % c1) == 0) *)
-(* ;; Before: (ramp((_0 + c0), c2) % broadcast(c1)) After : (ramp((_0 + fold((c0 % c1))), fold((c2 % c1)), 1) % c1);; Pred  : ((c1 > 0) && ((c0 >= c1) || (c0 < 0))) *)
-(* ;; Before: (ramp(((_0 * c0) + _1), c2) % broadcast(c1)) After : (ramp(_1, fold((c2 % c1)), 1) % c1);; Pred  : ((c0 % c1) == 0) *)
-(* ;; Before: (ramp((_1 + (_0 * c0)), c2) % broadcast(c1)) After : (ramp(_1, fold((c2 % c1)), 1) % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite((y + x * c0) % c1, y % c1, c0 % c1 == 0) *)
+Lemma modline71 : forall x y c0 c1, c0 mod c1 == 0 -> (y + x*c0) mod c1 == y mod c1.
+Proof.
+Admitted.
+
 (* ;; Before: (((_0 * c0) - _1) % c1) After : (-_1 % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite((x * c0 - y) % c1, (-y) % c1, c0 % c1 == 0) *)
+Lemma modline72 : forall x y c0 c1, c0 mod c1 == 0 -> (x*c0 - y) mod c1 == (- y) mod c1.
+Proof.
+Admitted.
+
+(* ;; Before: ((_1 - (_0 * c0)) % c1) After : (_1 % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite((y - x * c0) % c1, y % c1, c0 % c1 == 0) *)
+Lemma modline73 : forall x y c0 c1, c0 mod c1 == 0 -> (y - x*c0) mod c1 == y mod c1.
+Proof.
+Admitted.
+
+(* ;; Before: (ramp(_0, c0) % broadcast(c1)) After : (broadcast(_0, 1) % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite(ramp(x, c0) % broadcast(c1), broadcast(x, lanes) % c1, c0 % c1 == 0) *)
+Lemma modline76 : forall x c0 c1 lanes, c0 mod c1 == 0 -> (x + c0 * lanes) == x mod c1.
+Proof.
+Admitted.
+
+(* ;; Before: (ramp((_0 + c0), c2) % broadcast(c1)) After : (ramp((_0 + fold((c0 % c1))), fold((c2 % c1)), 1) % c1);; Pred  : ((c1 > 0) && ((c0 >= c1) || (c0 < 0))) *)
+(* rewrite(ramp(x + c0, c2) % broadcast(c1), (ramp(x + fold(c0 % c1), fold(c2 % c1), lanes) % c1), c1 > 0 && (c0 >= c1 || c0 < 0)) *)
+Lemma modline81 : forall x c0 c1 c2 lanes, c1 > 0 -> (c0 >= c1 or c0 < 0) -> (x + c0 + c2 * lanes) mod c1 == (x + (c0 mod c1) + (c2 mod c1)*lanes) mod c1.
+Proof.
+Admitted.
+
+(* ;; Before: (ramp(((_0 * c0) + _1), c2) % broadcast(c1)) After : (ramp(_1, fold((c2 % c1)), 1) % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite(ramp(x * c0 + y, c2) % broadcast(c1), ramp(y, fold(c2 % c1), lanes) % c1, c0 % c1 == 0) *)
+Lemma modline82 : forall x y c0 c1 c2 lanes, c0 mod c1 == 0 -> (x*c0 + y + c2 * lanes) mod c1 == (y + (c2 mod c1)*lanes) mod c1.
+Proof.
+Admitted.
+
+(* ;; Before: (ramp((_1 + (_0 * c0)), c2) % broadcast(c1)) After : (ramp(_1, fold((c2 % c1)), 1) % c1);; Pred  : ((c0 % c1) == 0) *)
+(* rewrite(ramp(y + x * c0, c2) % broadcast(c1), ramp(y, fold(c2 % c1), lanes) % c1, c0 % c1 == 0) *)
+Lemma modline83 : forall x y c0 c1 c2 lanes, c0 mod c1 == 0 -> (y + x*c0 + c2*lanes) mod c1 == (y + (c2 mod c1)*lanes) mod c1.
+Proof.
+Admitted.
+
+
 
 
 (********* SIMPLIFY_SUB ************)
 
-(* ;; Before: (_0 - ((_0 - _1) / c0)) After : ((((_0 * fold((c0 - 1))) + _1) + fold((c0 - 1))) / c0);; Pred  : (c0 > 0) *)
+(* ;; Before: (c0 - ((c1 - _0) / c2)) After : ((fold(((((c0 * c2) - c1) + c2) - 1)) + _0) / c2);; Pred  : (c2 > 0) *)
+(* rewrite(c0 - (c1 - x)/c2, (fold(c0*c2 - c1 + c2 - 1) + x)/c2, c2 > 0) *)
+Lemma subline250 : forall x c0 c1 c2, c2 > 0 -> c0 - (c1 - x)/c2 == (c0*c2 - c1 + c2 - 1 + x)/c2.
+Proof.
+Admitted.
+
+(* ;; Before: (c0 - ((_0 + c1) / c2)) After : ((fold(((((c0 * c2) - c1) + c2) - 1)) - _0) / c2);; Pred  : (c2 > 0) *)
+(* rewrite(c0 - (x + c1)/c2, (fold(c0*c2 - c1 + c2 - 1) - x)/c2, c2 > 0) *)
+Lemma subline251 : forall x c0 c1 c2, c0 - (x + c1)/c2 == (c0*c2 - c1 + c2 - 1 - x)/c2.
+Proof.
+Admitted.
+
 (* ;; Before: (_0 - ((_0 + _1) / c0)) After : ((((_0 * fold((c0 - 1))) - _1) + fold((c0 - 1))) / c0);; Pred  : (c0 > 0) *)
+(* rewrite(x - (x + y)/c0, (x*fold(c0 - 1) - y + fold(c0 - 1))/c0, c0 > 0) *)
+Lemma subline252 : forall x y c0, c0 > 0 -> x - (x + y)/c0 == (x*(c0 - 1) - y + (c0 - 1))/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (_0 - ((_0 - _1) / c0)) After : ((((_0 * fold((c0 - 1))) + _1) + fold((c0 - 1))) / c0);; Pred  : (c0 > 0) *)
+(* rewrite(x - (x - y)/c0, (x*fold(c0 - 1) + y + fold(c0 - 1))/c0, c0 > 0) *)
+Lemma subline253 : forall x y c0, c0 > 0 -> x - (x - y)/c0 == (x*(c0 - 1) + y + (c0 - 1))/c0.
+Proof.
+Admitted.
+
 (* ;; Before: (_0 - ((_1 + _0) / c0)) After : ((((_0 * fold((c0 - 1))) - _1) + fold((c0 - 1))) / c0);; Pred  : (c0 > 0) *)
+(* rewrite(x - (y + x)/c0, (x*fold(c0 - 1) - y + fold(c0 - 1))/c0, c0 > 0) *)
+Lemma subline254 : forall x y c0, c0 > 0 -> x - (y + x)/c0 == (x*(c0 - 1) - y + (c0 - 1))/c0.
+Proof.
+Admitted.
+
 (* ;; Before: (_0 - ((_1 - _0) / c0)) After : ((((_0 * fold((c0 + 1))) - _1) + fold((c0 - 1))) / c0);; Pred  : (c0 > 0) *)
-(* ;; Before: (((_0 - _1) / c0) - _0) After : (((_0 * fold((1 - c0))) - _1) / c0);; Pred  : 1 *)
-(* ;; Before: (((_0 - _1) / c0) - ((_0 + c1) / c0)) After : (((((_0 + fold((c1 % c0))) % c0) - _1) - c1) / c0);; Pred  : (c0 > 0) *)
-(* ;; Before: (((_0 + _1) / c0) - ((_0 + c1) / c0)) After : ((((_0 + fold((c1 % c0))) % c0) + (_1 - c1)) / c0);; Pred  : (c0 > 0) *)
+(* rewrite(x - (y - x)/c0, (x*fold(c0 + 1) - y + fold(c0 - 1))/c0, c0 > 0) *)
+Lemma subline255 : forall x y c0, c0 > 0 -> x - (y - x)/c0 == ((x * (c0 - 1) + y) + (c0 - 1))/c0.
+Proof.
+Admitted.
+
 (* ;; Before: (((_0 + _1) / c0) - _0) After : (((_0 * fold((1 - c0))) + _1) / c0);; Pred  : 1 *)
-(* ;; Before: (((_0 - _1) / c0) - (_0 / c0)) After : (((_0 % c0) - _1) / c0);; Pred  : (c0 > 0) *)
+(* rewrite((x + y)/c0 - x, (x*fold(1 - c0) + y)/c0) *)
+Lemma subline256 : forall x y c0, (x + y)/c0 - x == (x*(1 - c0) + y)/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_1 + _0) / c0) - _0) After : ((_1 + (_0 * fold((1 - c0)))) / c0);; Pred  : 1 *)
+(* rewrite((y + x)/c0 - x, (y + x*fold(1 - c0))/c0) *)
+Lemma subline257 : forall x y c0, (y + x)/c0 - x == (y + x*(1 - c0))/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 - _1) / c0) - _0) After : (((_0 * fold((1 - c0))) - _1) / c0);; Pred  : 1 *)
+(* rewrite((x - y)/c0 - x, (x*fold(1 - c0) - y)/c0) *)
+Lemma subline258 : forall x y c0, (x - y)/c0 - x == (x*(1 - c0) - y)/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_1 - _0) / c0) - _0) After : ((_1 - (_0 * fold((1 + c0)))) / c0);; Pred  : 1 *)
+(* rewrite((y - x)/c0 - x, (y - x*fold(1 + c0))/c0) *)
+Lemma subline259 : forall x y c0, (y - x)/c0 - x == (y - x*(1 + c0))/c0.
+Proof.
+Admitted.
+
+(* ;; Before: ((((_0 + c0) / c1) * c1) - _0) After : (-_0 % c1);; Pred  : ((c1 > 0) && ((c0 + 1) == c1)) *)
+(* rewrite(((x + c0)/c1)*c1 - x, (-x) % c1, c1 > 0 && c0 + 1 == c1) *)
+Lemma subline263 : forall x c0 c1, c1 > 0 -> c0 + 1 == c1 -> ((x + c0)/c1) * c1 - x == (- x) mod c1.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + _1) / c0) - ((_0 + c1) / c0)) After : ((((_0 + fold((c1 % c0))) % c0) + (_1 - c1)) / c0);; Pred  : (c0 > 0) *)
+(* rewrite((x + y)/c0 - (x + c1)/c0, (((x + fold(c1 % c0)) % c0) + (y - c1))/c0, c0 > 0) *)
+Lemma subline273 : forall x y c0 c1, c0 > 0 -> (x + y)/c0 - (x + c1)/c0 == (((x + (c1 mod c0)) mod c0) + y - c1)/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) - ((_0 + _1) / c0)) After : (((fold(((c0 + c1) - 1)) - _1) - ((_0 + fold((c1 % c0))) % c0)) / c0);; Pred  : (c0 > 0) *)
+(* rewrite((x + c1)/c0 - (x + y)/c0, ((fold(c0 + c1 - 1) - y) - ((x + fold(c1 % c0)) % c0))/c0, c0 > 0) *)
+Lemma subline274 : forall x y c0 c1, c0 > 0 -> (x + c1)/c0 - (x + y)/c0 == ((c0 + c1 - 1) - y - (x + (c1 mod c0)) mod c0) / c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 - _1) / c0) - ((_0 + c1) / c0)) After : (((((_0 + fold((c1 % c0))) % c0) - _1) - c1) / c0);; Pred  : (c0 > 0) *)
+(* rewrite((x - y)/c0 - (x + c1)/c0, (((x + fold(c1 % c0)) % c0) - y - c1)/c0, c0 > 0) *)
+Lemma subline275 : forall x y c0 c1, c0 > 0 -> (x - y)/c0 - (x + c1)/c0 == (((x + (c1 mod c0)) mod c0) - y - c1)/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 + c1) / c0) - ((_0 - _1) / c0)) After : (((_1 + fold(((c0 + c1) - 1))) - ((_0 + fold((c1 % c0))) % c0)) / c0);; Pred  : (c0 > 0) *)
+(* rewrite((x + c1)/c0 - (x - y)/c0, ((y + fold(c0 + c1 - 1)) - ((x + fold(c1 % c0)) % c0))/c0, c0 > 0) *)
+Lemma subline276 : forall x y c0 c1, c0 > 0 -> (x + c1)/c0 - (x - y)/c0 == (y + c0 + c1 - 1 - (x + (c1 mod c0) mod c0))/c0.
+Proof.
+Admitted.
+
+(* ;; Before: ((_0 / c0) - ((_0 + _1) / c0)) After : (((fold((c0 - 1)) - _1) - (_0 % c0)) / c0);; Pred  : (c0 > 0) *)
+(* rewrite(x/c0 - (x + y)/c0, ((fold(c0 - 1) - y) - (x % c0))/c0, c0 > 0) *)
+Lemma subline277 : forall x y c0, c0 > 0 -> x/c0 - (x + y)/c0 == (((c0 - 1) - y) - (x mod c0))/c0.
+Proof.
+Admitted.
+
 (* ;; Before: (((_0 + _1) / c0) - (_0 / c0)) After : (((_0 % c0) + _1) / c0);; Pred  : (c0 > 0) *)
+(* rewrite((x + y)/c0 - x/c0, ((x % c0) + y)/c0, c0 > 0) *)
+Lemma subline278 : forall x y c0, c0 > 0 -> (x + y)/c0 - x/c0 == ((x mod c0) + y)/c0.
+Proof.
+Admitted.
 
 (* ;; Before: ((_0 / c0) - ((_0 - _1) / c0)) After : (((_1 + fold((c0 - 1))) - (_0 % c0)) / c0);; Pred  : (c0 > 0) *)
-(* ;; Before: ((_0 / c0) - ((_0 + _1) / c0)) After : (((fold((c0 - 1)) - _1) - (_0 % c0)) / c0);; Pred  : (c0 > 0) *)
-(* ;; Before: ((((_0 + c0) / c1) * c1) - _0) After : (-_0 % c1);; Pred  : ((c1 > 0) && ((c0 + 1) == c1)) *)
-(* ;; Before: (((_1 - _0) / c0) - _0) After : ((_1 - (_0 * fold((1 + c0)))) / c0);; Pred  : 1 *)
-(* ;; Before: (((_1 + _0) / c0) - _0) After : ((_1 + (_0 * fold((1 - c0)))) / c0);; Pred  : 1 *)
-(* ;; Before: (c0 - ((_0 + c1) / c2)) After : ((fold(((((c0 * c2) - c1) + c2) - 1)) - _0) / c2);; Pred  : (c2 > 0) *)
-(* ;; Before: (c0 - ((c1 - _0) / c2)) After : ((fold(((((c0 * c2) - c1) + c2) - 1)) + _0) / c2);; Pred  : (c2 > 0) *)
-(* ;; Before: (((_0 + c1) / c0) - ((_0 + _1) / c0)) After : (((fold(((c0 + c1) - 1)) - _1) - ((_0 + fold((c1 % c0))) % c0)) / c0);; Pred  : (c0 > 0) *)
-(* ;; Before: (((_0 + c1) / c0) - ((_0 - _1) / c0)) After : (((_1 + fold(((c0 + c1) - 1))) - ((_0 + fold((c1 % c0))) % c0)) / c0);; Pred  : (c0 > 0) *)
+(* rewrite(x/c0 - (x - y)/c0, ((y + fold(c0 - 1)) - (x % c0))/c0, c0 > 0) *)
+Lemma subline279 : forall x y c0, c0 > 0 -> x/c0 - (x - y)/c0 == (y + (c0 - 1) - (x mod c0))/c0.
+Proof.
+Admitted.
+
+(* ;; Before: (((_0 - _1) / c0) - (_0 / c0)) After : (((_0 % c0) - _1) / c0);; Pred  : (c0 > 0) *)
+(* rewrite((x - y)/c0 - x/c0, ((x % c0) - y)/c0, c0 > 0)) *)
+Lemma subline280 : forall x y c0, c0 > 0 -> (x - y)/c0 - x/c0 == ((x mod c0) - y)/c0.
+Proof.
+Admitted.
+
+
+
+
+
+
+
+
 
 
 
