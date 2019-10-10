@@ -785,10 +785,26 @@ Qed.
 (********* SIMPLIFY_DIV ************)
 
 (* rewrite((x * c0) / c1, x / fold(c1 / c0),                          c1 % c0 == 0 && c0 > 0 && c1 / c0 != 0) *)
-Lemma divline120 : forall x c0 c1, c0 > 0 -> c1 mod c0 == 0 -> c1/c0 ~= 0 -> (x*c0)/c1 == x/(c1/c0).
+Lemma divline120 : forall x c0 c1, c0 > 0 -> c1/c0 ~= 0 -> c1 mod c0 == 0 -> (x*c0)/c1 == x/(c1/c0).
 Proof.
+  intros x c0 c1 H0 H1.
+  rewrite <- div_exact with (a := c1) (b := c0).
   intros.
-Admitted.
+  rewrite H at 1.
+  rewrite mul_comm.
+  rewrite div_mul_cancel_l.
+  reflexivity.
+  assumption.
+  assumption.
+  cut (0 ~= c0).
+  cut (0 < c0).
+  intros.
+  apply neq_sym.
+  assumption.
+  assumption.
+  apply lt_neq.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 * c0) + _1) / c1) After : ((_1 / c1) + (_0 * fold((c0 / c1))));; Pred  : (((c0 % c1) == 0) && (c1 > 0)) *)
 (* rewrite((x * c0 + y) / c1, y / c1 + x * fold(c0 / c1), c0 % c1 == 0 && c1 > 0) *)
@@ -1322,7 +1338,6 @@ Qed.
 (* rewrite(ramp(x, c0) / broadcast(c1), ramp(x / c1, fold(c0 / c1), lanes), c0 % c1 == 0) *)
 Lemma divline180 : forall x c0 c1 lanes, c1 ~= 0 -> c0 mod c1 == 0 -> (x + c0*lanes)/c1 == x/c1 + (c1/c0)*lanes.
 Proof.
-  intros.
 Admitted.
 
 (* ;; Before: (((_0 * c0) + c1) / c2) After : ((_0 + fold((c1 / c0))) / fold((c2 / c0)));; Pred  : (((c2 > 0) && (c0 > 0)) && ((c2 % c0) == 0)) *)
@@ -1330,6 +1345,63 @@ Admitted.
 Lemma divline187 : forall x c0 c1 c2, c2 > 0 -> c0 > 0 -> c2 mod c0 == 0 -> (x * c0 + c1)/c2 == (x + (c1/c0))/(c2/c0).
 Proof.
 Admitted.
+
+Lemma lt_neq_ooo : forall n m, n < m -> m ~= n.
+Proof.
+  intros.
+  cut (n ~= m).
+  apply neq_sym.
+  apply lt_neq.
+  assumption.
+Qed.
+
+Lemma divline187alt : forall x c0 c1 c2, c2/c0 ~= 0 -> c2 > 0 -> c0 > 0 -> c2 mod c0 == 0 -> c1 mod c0 == 0 -> 
+(x * c0 + c1)/c2 == (x + (c1/c0))/(c2/c0).
+Proof.
+  intros x c0 c1 c2 H0 H2 H3 H4.
+  rewrite <- div_exact with (a := c1).
+  intros H5.
+  cut (c2 mod c0 == 0).
+  rewrite <- div_exact with (a := c2).
+  intros H6.
+  rewrite H5 at 1.
+  rewrite H6 at 1.
+  rewrite mul_comm.
+  rewrite <- mul_add_distr_l.
+  rewrite div_mul_cancel_l.
+  reflexivity.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
+
+Lemma divline187alt2 : forall x c0 c1 c2, c2/c0 ~= 0 -> c2 ~= 0 -> c0 > 0 -> c2 mod c0 == 0 -> c1 mod c0 == 0 ->
+(x * c0 + c1)/c2 == (x + (c1/c0))/(c2/c0).
+Proof.
+  intros x c0 c1 c2 H0 H1 H2 H3.
+  rewrite <- div_exact with (a := c1).
+  intros H4.
+  cut (c2 mod c0 == 0).
+  rewrite <- div_exact with (a := c2).
+  intros H5.
+  rewrite H4 at 1.
+  rewrite H5 at 1.
+  rewrite mul_comm.
+  rewrite <- mul_add_distr_l.
+  rewrite div_mul_cancel_l.
+  reflexivity.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* rewrite((x * c0 + c1) / c2, x * fold(c0 / c2) + fold(c1 / c2), c2 > 0 && c0 % c2 == 0) *)
 Lemma divline190 : forall x c0 c1 c2, c2 > 0 -> c0 mod c2 == 0 -> (x * c0 + c1)/c2 == x*(c0/c2) + c1/c2.
