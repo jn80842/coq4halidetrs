@@ -1624,12 +1624,6 @@ Admitted.
 
 Require Import GenericMinMax.
 
-(* where is this in the stdlib???? *)
-Lemma max_comm : forall n m, (max n m) == (max m n).
-Proof.
-Admitted.
-
-
 (* ;; Before: max((_0 / c0), (_1 / c0)) After : (max(_0, _1) / c0);; Pred  : (c0 > 0) *)
 (* rewrite(max(x / c0, y / c0), max(x, y) / c0, c0 > 0) *)
 Lemma maxline233 : forall x y c0, c0 > 0 -> (max (x/c0) (y/c0)) == (max x y)/c0.
@@ -1669,12 +1663,62 @@ Lemma maxline234 : forall x y c0, c0 < 0 -> (max (x/c0) (y/c0)) == (min x y)/c0.
 Proof.
 Admitted.
 
+Lemma max_proper : forall x y z, x == y -> (max x z) == (max y z).
+Proof.
+  intros.
+  cut (x <= z \/ x > z).
+  intros.
+  destruct H0.
+  rewrite max_r.
+  cut (y <= z).
+  intros.
+  rewrite max_r.
+  reflexivity.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  (cut (z <= x)).
+  intros.
+  rewrite max_l.
+  (cut (z <= y)).
+  intros.
+  rewrite max_l.
+  assumption.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  apply lt_le_incl.
+  assumption.
+  apply le_gt_cases.
+Qed.
+
 (* ;; Before: max((_0 / c0), ((_1 / c0) + c1)) After : (max(_0, (_1 + fold((c1 * c0)))) / c0);; Pred  : ((c0 > 0) && !(overflows((c1 * c0)))) *)
 (* rewrite(max(x / c0, y / c0 + c1), max(x, y + fold(c1 * c0)) / c0, c0 > 0 && !overflows(c1 * c0)) *)
-Lemma maxline241 : forall x y c0 c1, c0 > 0 -> (max (x/c0) ((y/c0) + c1)) == (max x (y + c1 * c0)) / c0.
+Lemma maxline241 : forall x y c0 c1, c0 > 0 -> (max (x/c0) ((y/c0) + c1)) == ((max x (y + c1 * c0)) / c0).
 Proof.
-Admitted.
-
+  intros.
+  cut (y/c0 + c1 == (y + c1 * c0)/c0).
+  intros.
+  cut ((max (x / c0) (y / c0 + c1)) == (max (x/c0) ((y + c1 * c0) / c0) )).
+  intros.
+  rewrite H1.
+  apply maxline233 with (x := x) (y := (y + c1 * c0)) (c0 := c0).
+  assumption.
+  rewrite max_comm.
+  cut ((max (y / c0 + c1) (x / c0)) == (max ((y + c1 * c0)/c0) (x / c0))).
+  intros.
+  rewrite H1.
+  rewrite max_comm.
+  reflexivity.
+  apply max_proper.
+  assumption.
+  apply eq_sym.
+  apply div_add.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 (* ;; Before: max((_0 / c0), ((_1 / c0) + c1)) After : (min(_0, (_1 + fold((c1 * c0)))) / c0);; Pred  : ((c0 < 0) && !(overflows((c1 * c0)))) *)
 (* rewrite(max(x / c0, y / c0 + c1), min(x, y + fold(c1 * c0)) / c0, c0 < 0 && !overflows(c1 * c0)) *)
 Lemma maxline242 : forall x y c0 c1, (max (x / c0) (y / c0 + c1)) == (min x (y + c1 * c0)) / c0.
