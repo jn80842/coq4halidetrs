@@ -1624,6 +1624,10 @@ Admitted.
 
 Require Import GenericMinMax.
 
+Lemma max_comm : forall n m, (max n m) == (max m n).
+Proof.
+Admitted.
+
 (* ;; Before: max((_0 / c0), (_1 / c0)) After : (max(_0, _1) / c0);; Pred  : (c0 > 0) *)
 (* rewrite(max(x / c0, y / c0), max(x, y) / c0, c0 > 0) *)
 Lemma maxline233 : forall x y c0, c0 > 0 -> (max (x/c0) (y/c0)) == (max x y)/c0.
@@ -1727,11 +1731,72 @@ Admitted.
 
 (********* SIMPLIFY_MIN ************)
 
+Lemma min_comm : forall n m, (min n m) == (min m n).
+Proof.
+Admitted.
+
 (* ;; Before: min((_0 / c0), (_1 / c0)) After : (min(_0, _1) / c0);; Pred  : (c0 > 0) *)
 (* rewrite(min(x / c0, y / c0), min(x, y) / c0, c0 > 0) *)
 Lemma minline236 : forall x y c0, c0 > 0 -> (min (x / c0) (y / c0)) == (min x y) / c0.
 Proof.
-Admitted.
+  intros.
+  cut (y <= x \/ x <= y).
+  intros.
+  destruct H0.
+  cut (y/c0 <= x/c0).
+  intros.
+  rewrite min_r.
+  rewrite min_r.
+  reflexivity.
+  assumption.
+  assumption.
+  apply div_le_mono.
+  assumption.
+  assumption.
+  cut (x/c0 <= y/c0).
+  intros.
+  rewrite min_l.
+  rewrite min_l.
+  reflexivity.
+  assumption.
+  assumption.
+  apply div_le_mono.
+  assumption.
+  assumption.
+  apply le_ge_cases.
+Qed.
+
+Lemma min_proper : forall x y z, x == y -> (min x z) == (min y z).
+Proof.
+  intros.
+  cut (x <= z \/ x > z).
+  intros.
+  destruct H0.
+  rewrite min_l.
+  cut (y <= z).
+  intros.
+  rewrite min_l.
+  rewrite H.
+  reflexivity.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  cut (z <= x).
+  intros.
+  rewrite min_r.
+  cut (z <= y).
+  intros.
+  rewrite min_r.
+  reflexivity.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  apply lt_le_incl.
+  assumption.
+  apply le_gt_cases.
+Qed.
 
 (* ;; Before: min((_0 / c0), (_1 / c0)) After : (max(_0, _1) / c0);; Pred  : (c0 < 0) *)
 (* rewrite(min(x / c0, y / c0), max(x, y) / c0, c0 < 0) *)
@@ -1743,7 +1808,27 @@ Admitted.
 (* rewrite(min(x / c0, y / c0 + c1), min(x, y + fold(c1 * c0)) / c0, c0 > 0 && !overflows(c1 * c0)) *)
 Lemma minline244 : forall x y c0 c1, c0 > 0 -> (min (x / c0) (y / c0 + c1)) == (min x (y + c1 * c0)) / c0.
 Proof.
-Admitted.
+  intros.
+  cut (y/c0 + c1 == (y + c1 * c0)/c0).
+  intros.
+  cut ((min (x/c0) (y/c0 + c1)) == (min (x/c0) ((y + c1 * c0)/c0))).
+  intros.
+  rewrite H1.
+  apply minline236.
+  assumption.
+  rewrite min_comm.
+  cut ((min (y/c0 + c1) (x/c0)) == (min ((y + c1 * c0) / c0) (x/c0))).
+  intros.
+  rewrite H1.
+  rewrite min_comm.
+  reflexivity.
+  apply min_proper.
+  assumption.
+  apply eq_sym.
+  apply div_add.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* ;; Before: min((_0 / c0), ((_1 / c0) + c1)) After : (max(_0, (_1 + fold((c1 * c0)))) / c0);; Pred  : ((c0 < 0) && !(overflows((c1 * c0)))) *)
 (* rewrite(min(x / c0, y / c0 + c1), max(x, y + fold(c1 * c0)) / c0, c0 < 0 && !overflows(c1 * c0)) *)
