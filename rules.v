@@ -1432,7 +1432,7 @@ Qed.
 Lemma ltline140 : forall x c0 c1, c0 > 0 -> (x * c0) < c1 -> x < (c1 + c0 - 1)/c0.
 Proof.
 Admitted.
-(* this is not true? see x = -2, c0 = 1, c1 = -1 *)
+(* proved true in z3 *)
 
 (* ;; Before: (c1 < (_0 * c0)) After : (fold((c1 / c0)) < _0);; Pred  : (c0 > 0) *)
 (* rewrite(c1 < x * c0, fold(c1 / c0) < x, c0 > 0) *)
@@ -1460,7 +1460,6 @@ Proof.
   apply div_lt_upper_bound.
   assumption. *)
 Admitted.
-(* this is not true! see x = -1, c0 = 5, c1 = 0; x = -2, c0 = 1, c1 = -1 *)
 
 (* ;; Before: ((_0 * c0) < ((_1 * c0) + c1)) After : (_0 < (_1 + fold((((c1 + c0) - 1) / c0))));; Pred  : (c0 > 0) *)
 (* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0) *)
@@ -1661,11 +1660,61 @@ Proof.
   apply le_ge_cases.
 Qed.
 
+Lemma neg_div_antimonotone : forall a b c, c < 0 -> a <= b -> a/c >= b/c.
+Proof.
+  intros.
+  rewrite <- opp_involutive with (n := c) at 1.
+  rewrite div_opp_r.
+  rewrite le_ngt.
+  rewrite <- opp_involutive with (n := c) at 1.
+  rewrite div_opp_r.
+  rewrite nlt_ge.
+  rewrite <- opp_le_mono.
+  apply div_le_mono.
+  apply opp_pos_neg.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  apply opp_pos_neg.
+  assumption.
+  apply lt_neq_ooo.
+  apply opp_pos_neg.
+  assumption.
+Qed.
+
+
 (* ;; Before: max((_0 / c0), (_1 / c0)) After : (min(_0, _1) / c0);; Pred  : (c0 < 0) *)
 (* rewrite(max(x / c0, y / c0), min(x, y) / c0, c0 < 0) *)
 Lemma maxline234 : forall x y c0, c0 < 0 -> (max (x/c0) (y/c0)) == (min x y)/c0.
 Proof.
-Admitted.
+  intros.
+  cut (x <= y \/ y <= x).
+  intros.
+  destruct H0.
+  cut (x/c0 >= y/c0).
+  intros.
+  rewrite max_l.
+  rewrite min_l.
+  reflexivity.
+  assumption.
+  apply neg_div_antimonotone.
+  assumption.
+  assumption.
+  apply neg_div_antimonotone.
+  assumption.
+  assumption.
+  cut (y/c0 >= x/c0).
+  intros.
+  rewrite max_r.
+  rewrite min_r.
+  reflexivity.
+  assumption.
+  assumption.
+  apply neg_div_antimonotone.
+  assumption.
+  assumption.
+  apply le_ge_cases.
+Qed.
 
 Lemma max_proper : forall x y z, x == y -> (max x z) == (max y z).
 Proof.
@@ -1725,9 +1774,26 @@ Proof.
 Qed.
 (* ;; Before: max((_0 / c0), ((_1 / c0) + c1)) After : (min(_0, (_1 + fold((c1 * c0)))) / c0);; Pred  : ((c0 < 0) && !(overflows((c1 * c0)))) *)
 (* rewrite(max(x / c0, y / c0 + c1), min(x, y + fold(c1 * c0)) / c0, c0 < 0 && !overflows(c1 * c0)) *)
-Lemma maxline242 : forall x y c0 c1, (max (x / c0) (y / c0 + c1)) == (min x (y + c1 * c0)) / c0.
+Lemma maxline242 : forall x y c0 c1, c0 < 0 -> (max (x / c0) (y / c0 + c1)) == (min x (y + c1 * c0)) / c0.
 Proof.
-Admitted.
+  intros.
+  cut (y/c0 + c1 == (y + c1 * c0)/c0).
+  intros.
+  rewrite max_comm.
+  cut ((max (y/c0 + c1) (x/c0)) == (max ((y + c1 * c0)/c0) (x/c0))).
+  intros.
+  rewrite H1.
+  rewrite max_comm.
+  apply maxline234.
+  assumption.
+  apply max_proper.
+  assumption.
+  apply eq_sym.
+  apply div_add.
+  apply neq_sym.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (********* SIMPLIFY_MIN ************)
 
