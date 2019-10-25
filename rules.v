@@ -1868,7 +1868,32 @@ Qed.
 (* rewrite(min(x / c0, y / c0), max(x, y) / c0, c0 < 0) *)
 Lemma minline237 : forall x y c0, c0 < 0 -> (min (x / c0) (y / c0)) == (max x y) / c0.
 Proof.
-Admitted.
+  intros.
+  cut (x <= y \/ y <= x).
+  intros.
+  destruct H0.
+  cut (x/c0 >= y/c0).
+  intros.
+  rewrite max_r.
+  rewrite min_r.
+  reflexivity.
+  assumption.
+  assumption.
+  apply neg_div_antimonotone.
+  assumption.
+  assumption.
+  cut (y/c0 >= x/c0).
+  intros.
+  rewrite max_l.
+  rewrite min_l.
+  reflexivity.
+  assumption.
+  assumption.
+  apply neg_div_antimonotone.
+  assumption.
+  assumption.
+  apply le_ge_cases.
+Qed.
 
 (* ;; Before: min((_0 / c0), ((_1 / c0) + c1)) After : (min(_0, (_1 + fold((c1 * c0)))) / c0);; Pred  : ((c0 > 0) && !(overflows((c1 * c0)))) *)
 (* rewrite(min(x / c0, y / c0 + c1), min(x, y + fold(c1 * c0)) / c0, c0 > 0 && !overflows(c1 * c0)) *)
@@ -1900,7 +1925,26 @@ Qed.
 (* rewrite(min(x / c0, y / c0 + c1), max(x, y + fold(c1 * c0)) / c0, c0 < 0 && !overflows(c1 * c0)) *)
 Lemma minline245 : forall x y c0 c1, c0 < 0 -> (min (x / c0) (y / c0 + c1)) == (max x (y + c1 * c0)) / c0.
 Proof.
-Admitted.
+  intros.
+  cut (y/c0 + c1 == (y + c1 * c0)/c0).
+  intros.
+  rewrite max_comm.
+  cut ((min (x/c0) (y/c0 + c1)) == (min ((y + c1 * c0)/c0) (x/c0))).
+  intros.
+  rewrite H1.
+  rewrite max_comm.
+  rewrite min_comm.
+  apply minline237.
+  assumption.
+  rewrite min_comm.
+  apply min_proper.
+  assumption.
+  apply eq_sym.
+  apply div_add.
+  apply neq_sym.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 
 (********* SIMPLIFY_MOD ************)
