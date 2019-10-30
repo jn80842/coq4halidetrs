@@ -10,7 +10,7 @@
 
 Require Import ZAxioms ZMulOrder ZSgnAbs NZDiv.
 Require Import NZAdd NZOrder ZAdd NZBase.
-
+Require Import GenericMinMax ZMaxMin.
 
 
 (** * Euclidean Division for integers, Euclid convention
@@ -626,6 +626,27 @@ intros Hab. exists (a/b). rewrite mul_comm.
  rewrite (div_mod a b Hb) at 1. rewrite Hab; now nzsimpl.
 intros (c,Hc). rewrite Hc. now apply mod_mul.
 Qed.
+
+(********* Lemmas from GenericMinMax that I can't import for some reason? ******)
+Lemma max_comm : forall n m, (max n m) == (max m n).
+Proof.
+Admitted.
+
+Lemma min_comm n m : min n m == min m n.
+Proof.
+Admitted.
+
+Lemma max_le_iff n m p : p <= max n m <-> p <= n \/ p <= m.
+Proof.
+Admitted.
+
+Lemma min_le n m p : min n m <= p -> n <= p \/ m <= p.
+Proof.
+Admitted.
+
+Lemma min_le_iff n m p : min n m <= p <-> n <= p \/ m <= p.
+Proof.
+Admitted.
 
 (********* Helpful lemmas ************)
 
@@ -1500,132 +1521,280 @@ Lemma ltline289 : forall x c0 c1 c2, c0 > 0 -> c1 >= c2 -> ~((x + c1) / c0 < (x 
 Proof.
   intros.
   rewrite nlt_ge.
-  rewrite mul_le_mono_pos_l with (p := c0).
-  cut (c0* ((x + c2)/c0) <= x + c2).
-  2: {
-Admitted.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+Qed.
 
 (* ;; Before: ((_0 / c0) < ((_0 + c2) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c2)) *)
 (* rewrite(x/c0 < (x + c2)/c0, false, c0 > 0 && 0 >= c2) *)
-Lemma ltline292 : forall x c0 c2, c0 > 0 -> 0 >= c2 -> x/c0 < (x + c2)/c0 = false.
+Lemma ltline292 : forall x c0 c2, c0 > 0 -> 0 >= c2 -> ~ (x/c0 < (x + c2)/c0).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite <- add_0_r with (n := x) at 2.
+  cut (x + c2 <= x + 0).
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
 (* rewrite((x + c1)/c0 < x/c0, false, c0 > 0 && c1 >= 0) *)
-Lemma ltline295 : forall x c0 c1, c0 > 0 -> c1 >= 0 -> (x + c1) / c0 < x / c0 = false.
+Lemma ltline295 : forall x c0 c1, c0 > 0 -> c1 >= 0 -> ~((x + c1) / c0 < x / c0).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite <- add_0_r with (n := x) at 1.
+  cut (x + 0 <= x + c1).
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < ((_0 / c0) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
 (* rewrite((x + c1)/c0 < x/c0 + c2, false, c0 > 0 && c1 >= c2 * c0) *)
-Lemma ltline299 : forall x c0 c1 c2, c0 > 0 -> c1 >= c2 * c0 -> (x + c1) / c0 < x / c0 + c2 = false.
+Lemma ltline299 : forall x c0 c1 c2, c0 > 0 -> c1 >= c2 * c0 -> ~((x + c1) / c0 < x / c0 + c2).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite <- div_add.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < (min((_0 / c0), _1) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
 (* rewrite((x + c1)/c0 < (min(x/c0, y) + c2), false, c0 > 0 && c1 >= c2 * c0) *)
-Lemma ltline303 : forall x y c0 c1 c2, c0 > 0 -> c1 >= (c2 * c0) -> (x + c1) / c0 < (min (x / c0) y) + c2 = false.
+Lemma ltline303 : forall x y c0 c1 c2, c0 > 0 -> c1 >= (c2 * c0) -> ~((x + c1) / c0 < (min (x / c0) y) + c2).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite le_add_le_sub_r.
+  rewrite min_le_iff.
+  cut (x / c0 <= (x + c1) / c0 - c2).
+  auto.
+  rewrite <- le_add_le_sub_r.
+  rewrite <- div_add.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < min(((_0 + c2) / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
 (* rewrite((x + c1)/c0 < min((x + c2)/c0, y), false, c0 > 0 && c1 >= c2) *)
-Lemma ltline305 : forall x y c0 c1 c2, c0 > 0 -> c1 >= c2 -> (x + c1) / c0 < (min ((x + c2) / c0), y) = false.
+Lemma ltline305 : forall x y c0 c1 c2, c0 > 0 -> c1 >= c2 -> ~((x + c1) / c0 < (min ((x + c2) / c0) y)).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite min_le_iff.
+  cut ((x + c2) / c0 <= (x + c1) / c0).
+  auto.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < min((_0 / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
 (* rewrite((x + c1)/c0 < min(x/c0, y), false, c0 > 0 && c1 >= 0) *)
-Lemma ltline307 : forall x y c0 c1, c0 > 0 -> c1 >= 0 -> (x + c1) / c0 < (min (x / c0) y) = false.
+Lemma ltline307 : forall x y c0 c1, c0 > 0 -> c1 >= 0 -> ~((x + c1) / c0 < (min (x / c0) y)).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  cut (x/c0 <= (x + c1)/c0).
+  intros.
+  rewrite min_le_iff.
+  auto.
+  rewrite <- add_0_r with (n := x) at 1.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < (min(_1, (_0 / c0)) + c2)) After : 0;; Pred  : ((c0 > 0) && (c1 >= (c2 * c0))) *)
 (* rewrite((x + c1)/c0 < (min(y, x/c0) + c2), false, c0 > 0 && c1 >= c2 * c0) *)
-Lemma ltline310 : forall x y c0 c1 c2, (x + c1) / c0 < (min y (x / c0)) + c2 = false.
+Lemma ltline310 : forall x y c0 c1 c2, c0 > 0 -> c1 >= c2 * c0 -> ~((x + c1) / c0 < (min y (x / c0)) + c2).
 Proof.
-Admitted.
+  intros.
+  rewrite min_comm.
+  apply ltline303.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < min(_1, ((_0 + c2) / c0))) After : 0;; Pred  : ((c0 > 0) && (c1 >= c2)) *)
 (* rewrite((x + c1)/c0 < min(y, (x + c2)/c0), false, c0 > 0 && c1 >= c2) *)
-Lemma ltline312 : forall x y c0 c1 c2, c0 > 0 -> c1 >= c2 -> (x + c1) / c0 < (min y ((x + c2)/c0)) = false.
+Lemma ltline312 : forall x y c0 c1 c2, c0 > 0 -> c1 >= c2 -> ~((x + c1) / c0 < (min y ((x + c2)/c0))).
 Proof.
-Admitted.
+  intros.
+  rewrite min_comm.
+  apply ltline305.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) < min(_1, (_0 / c0))) After : 0;; Pred  : ((c0 > 0) && (c1 >= 0)) *)
 (* rewrite((x + c1)/c0 < min(y, x/c0), false, c0 > 0 && c1 >= 0) *)
-Lemma ltline314 : forall x y c0 c1, c0 > 0 -> c1 >= 0 -> (x + c1) / c0 < (min y (x / c0)) = false.
+Lemma ltline314 : forall x y c0 c1, c0 > 0 -> c1 >= 0 -> ~((x + c1) / c0 < (min y (x / c0))).
 Proof.
-Admitted.
+  intros.
+  rewrite min_comm.
+  apply ltline307.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (max(((_0 + c2) / c0), _1) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= c1)) *)
 (* rewrite(max((x + c2)/c0, y) < (x + c1)/c0, false, c0 > 0 && c2 >= c1) *)
-Lemma ltline317 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 -> (max ((x + c2)/c0) y) < (x + c1) / c0 = false.
+Lemma ltline317 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 -> ~((max ((x + c2)/c0) y) < (x + c1) / c0).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite max_le_iff.
+  cut ((x + c1) / c0 <= (x + c2) / c0).
+  auto.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+Qed.
 
 (* ;; Before: (max((_0 / c0), _1) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c1)) *)
 (* rewrite(max(x/c0, y) < (x + c1)/c0, false, c0 > 0 && 0 >= c1) *)
-Lemma ltline319 : forall x y c0 c1, (max (x / c0) y) < (x + c1) / c0 = false.
+Lemma ltline319 : forall x y c0 c1, c0 > 0 -> 0 >= c1 -> ~((max (x / c0) y) < (x + c1) / c0).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite max_le_iff.
+  cut ((x + c1)/c0 <= x/c0).
+  auto.
+  rewrite <- add_0_r with (n := x) at 2.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+Qed.
 
 (* ;; Before: (max(_1, ((_0 + c2) / c0)) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= c1)) *)
 (* rewrite(max(y, (x + c2)/c0) < (x + c1)/c0, false, c0 > 0 && c2 >= c1) *)
-Lemma ltline321 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 -> (max y ((x + c2)/c0)) < (x + c1) / c0 = false.
+Lemma ltline321 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 -> ~((max y ((x + c2)/c0)) < (x + c1) / c0).
 Proof.
-Admitted.
+  intros.
+  rewrite max_comm.
+  apply ltline317.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (max(_1, (_0 / c0)) < ((_0 + c1) / c0)) After : 0;; Pred  : ((c0 > 0) && (0 >= c1)) *)
 (* rewrite(max(y, x/c0) < (x + c1)/c0, false, c0 > 0 && 0 >= c1) *)
-Lemma ltline323 : forall x y c0 c1, c0 > 0 -> 0 >= c1 -> (max y (x/c0)) < (x + c1)/c0 = false.
+Lemma ltline323 : forall x y c0 c1, c0 > 0 -> 0 >= c1 -> ~((max y (x/c0)) < (x + c1)/c0).
 Proof.
-Admitted.
+  intros.
+  rewrite max_comm.
+  apply ltline319.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (max(((_0 + c2) / c0), _1) < ((_0 / c0) + c1)) After : 0;; Pred  : ((c0 > 0) && (c2 >= (c1 * c0))) *)
 (* rewrite(max((x + c2)/c0, y) < x/c0 + c1, false, c0 > 0 && c2 >= c1 * c0) *)
-Lemma ltline327 : forall x y c0 c1 c2, c0 > 0 -> c2 >= (c1 * c0) -> (max ((x + c2) / c0) y) < (x / c0) + c1 = false.
+Lemma ltline327 : forall x y c0 c1 c2, c0 > 0 -> c2 >= (c1 * c0) -> ~((max ((x + c2) / c0) y) < ((x / c0) + c1)).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite max_le_iff.
+  cut (x / c0 + c1 <= (x + c2) / c0).
+  auto.
+  rewrite <- div_add.
+  apply div_le_mono.
+  assumption.
+  apply add_le_mono_l.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* ;; Before: (max(_1, ((_0 + c2) / c0)) < ((_0 / c0) + c1)) After : 0;; Pred  : ((c0 > 0) && (c2 >= (c1 * c0))) *)
 (* rewrite(max(y, (x + c2)/c0) < x/c0 + c1, false, c0 > 0 && c2 >= c1 * c0) *)
-Lemma ltline329 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 * c0 -> (max y ((x + c2)/c0)) < x/c0 + c1 = false.
+Lemma ltline329 : forall x y c0 c1 c2, c0 > 0 -> c2 >= c1 * c0 -> ~((max y ((x + c2)/c0)) < x/c0 + c1).
 Proof.
-Admitted.
+  intros.
+  rewrite max_comm.
+  apply ltline327.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: ((_0 / c0) < min(((_0 + c2) / c0), _1)) After : 0;; Pred  : ((c0 > 0) && (c2 < 0)) *)
 (* rewrite(x/c0 < min((x + c2)/c0, y), false, c0 > 0 && c2 < 0) *)
-Lemma ltline333 : forall x y c0 c2, c0 > 0 -> c2 < 0 -> x/c0 < (min ((x + c2)/c0) y) = false.
+Lemma ltline333 : forall x y c0 c2, c0 > 0 -> c2 < 0 -> ~(x/c0 < (min ((x + c2)/c0) y)).
 Proof.
-Admitted. 
+  intros.
+  rewrite <- le_ngt.
+  rewrite <- add_0_r with (n := x) at 2.
+  cut ((x + c2) / c0 <= (x + 0)/c0).
+  intros.
+  rewrite min_le_iff with (n := (x+c2)/c0) (m := y) (p := (x + 0)/c0).
+  auto.
+  rewrite add_0_r.
+  rewrite le_ngt.
+  apply ltline292.
+  assumption.
+  apply lt_le_incl.
+  assumption.
+Qed.
 
 (* ;; Before: ((_0 / c0) < min(_1, ((_0 + c2) / c0))) After : 0;; Pred  : ((c0 > 0) && (c2 < 0)) *)
 (* rewrite(x/c0 < min(y, (x + c2)/c0), false, c0 > 0 && c2 < 0) *)
-Lemma ltline335 : forall x y c0 c2, c0 > 0 -> c2 < 0 -> x/c0 < (min y ((x + c2)/c0)) = false.
+Lemma ltline335 : forall x y c0 c2, c0 > 0 -> c2 < 0 -> ~(x/c0 < (min y ((x + c2)/c0))).
 Proof.
-Admitted.
+  intros.
+  rewrite min_comm.
+  apply ltline333.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (max(((_0 + c2) / c0), _1) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= 0)) *)
 (* rewrite(max((x + c2)/c0, y) < x/c0, false, c0 > 0 && c2 >= 0) *)
-Lemma ltline337 : forall x y c0 c2, c0 > 0 -> c2 >= 0 -> (max ((x + c2) / c0) y) < (x / c0) = false.
+Lemma ltline337 : forall x y c0 c2, c0 > 0 -> c2 >= 0 -> ~((max ((x + c2) / c0) y) < (x / c0)).
 Proof.
-Admitted.
+  intros.
+  rewrite <- le_ngt.
+  rewrite max_le_iff.
+  cut (x/c0 <= (x + c2)/c0).
+  intros.
+  auto.
+  rewrite le_ngt.
+  apply ltline295.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (max(_1, ((_0 + c2) / c0)) < (_0 / c0)) After : 0;; Pred  : ((c0 > 0) && (c2 >= 0)) *)
 (* rewrite(max(y, (x + c2)/c0) < x/c0, false, c0 > 0 && c2 >= 0) *)
 Lemma ltline339 : forall x y c0 c2, c0 > 0 -> c2 >= 0 -> ~((max y ((x + c2)/c0)) < x/c0).
 Proof.
-Admitted.
+  intros.
+  rewrite max_comm.
+  apply ltline337.
+  assumption.
+  assumption.
+Qed.
 
 (********* SIMPLIFY_MAX ************)
-
-Require Import GenericMinMax.
-
-Lemma max_comm : forall n m, (max n m) == (max m n).
-Proof.
-Admitted.
 
 (* ;; Before: max((_0 / c0), (_1 / c0)) After : (max(_0, _1) / c0);; Pred  : (c0 > 0) *)
 (* rewrite(max(x / c0, y / c0), max(x, y) / c0, c0 > 0) *)
