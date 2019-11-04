@@ -659,6 +659,91 @@ Proof.
   assumption.
 Qed.
 
+Lemma neg_div_antimonotone : forall a b c, c < 0 -> a <= b -> a/c >= b/c.
+Proof.
+  intros.
+  rewrite <- opp_involutive with (n := c) at 1.
+  rewrite div_opp_r.
+  rewrite le_ngt.
+  rewrite <- opp_involutive with (n := c) at 1.
+  rewrite div_opp_r.
+  rewrite nlt_ge.
+  rewrite <- opp_le_mono.
+  apply div_le_mono.
+  apply opp_pos_neg.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  apply opp_pos_neg.
+  assumption.
+  apply lt_neq_ooo.
+  apply opp_pos_neg.
+  assumption.
+Qed.
+
+Lemma max_proper : forall x y z, x == y -> (max x z) == (max y z).
+Proof.
+  intros.
+  cut (x <= z \/ x > z).
+  intros.
+  destruct H0.
+  rewrite max_r.
+  cut (y <= z).
+  intros.
+  rewrite max_r.
+  reflexivity.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  (cut (z <= x)).
+  intros.
+  rewrite max_l.
+  (cut (z <= y)).
+  intros.
+  rewrite max_l.
+  assumption.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  apply lt_le_incl.
+  assumption.
+  apply le_gt_cases.
+Qed.
+
+Lemma min_proper : forall x y z, x == y -> (min x z) == (min y z).
+Proof.
+  intros.
+  cut (x <= z \/ x > z).
+  intros.
+  destruct H0.
+  rewrite min_l.
+  cut (y <= z).
+  intros.
+  rewrite min_l.
+  rewrite H.
+  reflexivity.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  cut (z <= x).
+  intros.
+  rewrite min_r.
+  cut (z <= y).
+  intros.
+  rewrite min_r.
+  reflexivity.
+  assumption.
+  rewrite <- H.
+  assumption.
+  assumption.
+  apply lt_le_incl.
+  assumption.
+  apply le_gt_cases.
+Qed.
+
 (********* PROOFS OF REWRITE RULES ***********)
 
 (********* Z3 RETURNS UNKNOWN **********)
@@ -1472,15 +1557,27 @@ Qed.
 
 (* ;; Before: ((_0 / c0) < c1) After : (_0 < (c1 * c0));; Pred  : (c0 > 0) *)
 (* rewrite(x / c0 < c1, x < c1 * c0, c0 > 0) *)
-Lemma ltline145 : forall x c0 c1, c0 > 0 -> (x/c0) < c1 -> x < c1*c0.
+Lemma ltline145 : forall x c0 c1, c0 > 0 -> (x mod c0 == 0) -> (x/c0) < c1 -> x < c1*c0.
 Proof.
-(*  intros.
-  constructor.
-  Focus 2.
-  rewrite mul_comm.
-  apply div_lt_upper_bound.
-  assumption. *)
-Admitted.
+  intros.
+  rewrite <- le_succ_l in H1.
+  cut (c0 * S (x/c0) <= c0 * c1).
+  intros.
+  cut (x < c0 * S (x/c0)).
+  intros.
+  apply lt_le_trans with (m := c0 * S (x / c0)).
+  assumption.
+  cut (c1 * c0 == c0 * c1).
+  intros.
+  rewrite H4.
+  assumption.
+  apply mul_comm.
+  apply mul_succ_div_gt.
+  assumption.
+  apply mul_le_mono_pos_l.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: ((_0 * c0) < ((_1 * c0) + c1)) After : (_0 < (_1 + fold((((c1 + c0) - 1) / c0))));; Pred  : (c0 > 0) *)
 (* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0) *)
@@ -1829,29 +1926,6 @@ Proof.
   apply le_ge_cases.
 Qed.
 
-Lemma neg_div_antimonotone : forall a b c, c < 0 -> a <= b -> a/c >= b/c.
-Proof.
-  intros.
-  rewrite <- opp_involutive with (n := c) at 1.
-  rewrite div_opp_r.
-  rewrite le_ngt.
-  rewrite <- opp_involutive with (n := c) at 1.
-  rewrite div_opp_r.
-  rewrite nlt_ge.
-  rewrite <- opp_le_mono.
-  apply div_le_mono.
-  apply opp_pos_neg.
-  assumption.
-  assumption.
-  apply lt_neq_ooo.
-  apply opp_pos_neg.
-  assumption.
-  apply lt_neq_ooo.
-  apply opp_pos_neg.
-  assumption.
-Qed.
-
-
 (* ;; Before: max((_0 / c0), (_1 / c0)) After : (min(_0, _1) / c0);; Pred  : (c0 < 0) *)
 (* rewrite(max(x / c0, y / c0), min(x, y) / c0, c0 < 0) *)
 Lemma maxline234 : forall x y c0, c0 < 0 -> (max (x/c0) (y/c0)) == (min x y)/c0.
@@ -1883,37 +1957,6 @@ Proof.
   assumption.
   assumption.
   apply le_ge_cases.
-Qed.
-
-Lemma max_proper : forall x y z, x == y -> (max x z) == (max y z).
-Proof.
-  intros.
-  cut (x <= z \/ x > z).
-  intros.
-  destruct H0.
-  rewrite max_r.
-  cut (y <= z).
-  intros.
-  rewrite max_r.
-  reflexivity.
-  assumption.
-  rewrite <- H.
-  assumption.
-  assumption.
-  (cut (z <= x)).
-  intros.
-  rewrite max_l.
-  (cut (z <= y)).
-  intros.
-  rewrite max_l.
-  assumption.
-  assumption.
-  rewrite <- H.
-  assumption.
-  assumption.
-  apply lt_le_incl.
-  assumption.
-  apply le_gt_cases.
 Qed.
 
 (* ;; Before: max((_0 / c0), ((_1 / c0) + c1)) After : (max(_0, (_1 + fold((c1 * c0)))) / c0);; Pred  : ((c0 > 0) && !(overflows((c1 * c0)))) *)
@@ -1966,10 +2009,6 @@ Qed.
 
 (********* SIMPLIFY_MIN ************)
 
-Lemma min_comm : forall n m, (min n m) == (min m n).
-Proof.
-Admitted.
-
 (* ;; Before: min((_0 / c0), (_1 / c0)) After : (min(_0, _1) / c0);; Pred  : (c0 > 0) *)
 (* rewrite(min(x / c0, y / c0), min(x, y) / c0, c0 > 0) *)
 Lemma minline236 : forall x y c0, c0 > 0 -> (min (x / c0) (y / c0)) == (min x y) / c0.
@@ -1999,38 +2038,6 @@ Proof.
   assumption.
   assumption.
   apply le_ge_cases.
-Qed.
-
-Lemma min_proper : forall x y z, x == y -> (min x z) == (min y z).
-Proof.
-  intros.
-  cut (x <= z \/ x > z).
-  intros.
-  destruct H0.
-  rewrite min_l.
-  cut (y <= z).
-  intros.
-  rewrite min_l.
-  rewrite H.
-  reflexivity.
-  assumption.
-  rewrite <- H.
-  assumption.
-  assumption.
-  cut (z <= x).
-  intros.
-  rewrite min_r.
-  cut (z <= y).
-  intros.
-  rewrite min_r.
-  reflexivity.
-  assumption.
-  rewrite <- H.
-  assumption.
-  assumption.
-  apply lt_le_incl.
-  assumption.
-  apply le_gt_cases.
 Qed.
 
 (* ;; Before: min((_0 / c0), (_1 / c0)) After : (max(_0, _1) / c0);; Pred  : (c0 < 0) *)
@@ -2428,7 +2435,6 @@ Admitted.
 Lemma subline280 : forall x y c0, c0 > 0 -> (x - y)/c0 - x/c0 == ((x mod c0) - y)/c0.
 Proof.
 Admitted.
-
 
 
 
