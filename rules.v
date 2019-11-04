@@ -744,6 +744,21 @@ Proof.
   apply le_gt_cases.
 Qed.
 
+Lemma div_nonzero : forall a b, a ~= 0 -> b ~= 0 -> a mod b == 0 -> a/b ~= 0.
+Proof.
+  intros.
+  cut (a == b*(a/b)).
+  intros.
+  rewrite <- mul_cancel_l with (p := b).
+  rewrite <- H2.
+  rewrite mul_0_r.
+  assumption.
+  assumption.
+  apply div_exact.
+  assumption.
+  assumption.
+Qed.
+
 (********* PROOFS OF REWRITE RULES ***********)
 
 (********* Z3 RETURNS UNKNOWN **********)
@@ -1460,7 +1475,28 @@ Admitted.
 (* rewrite((x * c0 + c1) / c2, (x + fold(c1 / c0)) / fold(c2 / c0), c2 > 0 && c0 > 0 && c2 % c0 == 0) *)
 Lemma divline187 : forall x c0 c1 c2, c2 > 0 -> c0 > 0 -> c2 mod c0 == 0 -> (x * c0 + c1)/c2 == (x + (c1/c0))/(c2/c0).
 Proof.
-Admitted.
+  intros.
+  cut (c2 == c0*(c2/c0)).
+  intros.
+  rewrite H2.
+  rewrite <- div_div.
+  rewrite div_add_l.
+  rewrite <- H2.
+  reflexivity.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  apply div_nonzero.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  apply div_exact.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+Qed.
 
 Lemma divline187alt : forall x c0 c1 c2, c2/c0 ~= 0 -> c2 > 0 -> c0 > 0 -> c2 mod c0 == 0 -> c1 mod c0 == 0 -> 
 (x * c0 + c1)/c2 == (x + (c1/c0))/(c2/c0).
@@ -1537,8 +1573,11 @@ Qed.
 (* rewrite(x * c0 < c1, x < fold((c1 + c0 - 1) / c0), c0 > 0) *)
 Lemma ltline140 : forall x c0 c1, c0 > 0 -> (x * c0) < c1 -> x < (c1 + c0 - 1)/c0.
 Proof.
+  intros.
+  apply lt_le_incl in H0.
+  rewrite mul_comm in H0.
+  apply div_le_lower_bound in H0.
 Admitted.
-(* proved true in z3 *)
 
 (* ;; Before: (c1 < (_0 * c0)) After : (fold((c1 / c0)) < _0);; Pred  : (c0 > 0) *)
 (* rewrite(c1 < x * c0, fold(c1 / c0) < x, c0 > 0) *)
@@ -2150,9 +2189,33 @@ Qed.
 
 (* ;; Before: ((_0 * c0) % c1) After : ((_0 % fold((c1 / c0))) * c0);; Pred  : ((c0 > 0) && ((c1 % c0) == 0)) *)
 (* rewrite((x * c0) % c1, (x % fold(c1/c0)) * c0, c0 > 0 && c1 % c0 == 0) *)
-Lemma modline69 : forall x c0 c1, c0 > 0 -> c0 == 0 -> (x * c0) mod c1 == (x mod (c1/c0))*c0.
+Lemma modline69 : forall x c0 c1, c0 > 0 -> c1 ~= 0 -> c1 mod c0 == 0 -> (x * c0) mod c1 == (x mod (c1/c0))*c0.
 Proof.
-Admitted.
+  intros.
+  rewrite <- mul_mod_distr_r.
+  cut (c1 == c0 * (c1/c0)).
+  intros.
+  rewrite mul_comm with (n := c1/c0).
+  rewrite <- H2.
+  reflexivity.
+  apply div_exact.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  rewrite <- mul_cancel_l with (p := c0).
+  cut (c1 == c0 * (c1/c0)).
+  intros.
+  rewrite <- H2.
+  rewrite mul_0_r.
+  assumption.
+  apply div_exact.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 * c0) + _1) % c1) After : (_1 % c1);; Pred  : ((c0 % c1) == 0) *)
 (* rewrite((x * c0 + y) % c1, y % c1, c0 % c1 == 0) *)
@@ -2392,7 +2455,47 @@ Admitted.
 (* rewrite((x + y)/c0 - (x + c1)/c0, (((x + fold(c1 % c0)) % c0) + (y - c1))/c0, c0 > 0) *)
 Lemma subline273 : forall x y c0 c1, c0 > 0 -> (x + y)/c0 - (x + c1)/c0 == (((x + (c1 mod c0)) mod c0) + y - c1)/c0.
 Proof.
-Admitted.
+  intros.
+  rewrite mod_eq with (a := c1) (b := c0).
+  rewrite mod_eq.
+  rewrite add_sub_assoc with (n := x) (m := c1) (p := c0 * (c1/c0)).
+  rewrite <- add_opp_r with (m := c1).
+  rewrite <- add_opp_r with (m := c0 * ((x + c1 - c0 * (c1 / c0)) / c0)).
+  rewrite <- add_assoc.
+  rewrite add_shuffle0.
+  rewrite <- mul_opp_r.
+  rewrite <- add_opp_r with (m := c0 * (c1 / c0)).
+  rewrite <- mul_opp_r.
+  rewrite mul_comm.
+  rewrite div_add.
+  rewrite mul_comm with (m := - ((x + c1) / c0 + - (c1 / c0))).
+  rewrite div_add.
+  rewrite add_shuffle0.
+  rewrite div_add.
+  rewrite add_shuffle1.
+  rewrite add_opp_r with (n := c1) (m := c1).
+  rewrite sub_diag.
+  rewrite add_0_r.
+  rewrite opp_add_distr.
+  rewrite opp_involutive.
+  rewrite add_shuffle1.
+  rewrite add_comm with (n := -(c1/c0)).
+  rewrite add_opp_r.
+  rewrite add_opp_r.
+  rewrite sub_diag.
+  rewrite add_0_r.
+  reflexivity.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) - ((_0 + _1) / c0)) After : (((fold(((c0 + c1) - 1)) - _1) - ((_0 + fold((c1 % c0))) % c0)) / c0);; Pred  : (c0 > 0) *)
 (* rewrite((x + c1)/c0 - (x + y)/c0, ((fold(c0 + c1 - 1) - y) - ((x + fold(c1 % c0)) % c0))/c0, c0 > 0) *)
@@ -2404,7 +2507,12 @@ Admitted.
 (* rewrite((x - y)/c0 - (x + c1)/c0, (((x + fold(c1 % c0)) % c0) - y - c1)/c0, c0 > 0) *)
 Lemma subline275 : forall x y c0 c1, c0 > 0 -> (x - y)/c0 - (x + c1)/c0 == (((x + (c1 mod c0)) mod c0) - y - c1)/c0.
 Proof.
-Admitted.
+  intros.
+  rewrite <- add_opp_r with (n := x) (m := y).
+  rewrite <- add_opp_r with (m := y).
+  apply subline273.
+  assumption.
+Qed.
 
 (* ;; Before: (((_0 + c1) / c0) - ((_0 - _1) / c0)) After : (((_1 + fold(((c0 + c1) - 1))) - ((_0 + fold((c1 % c0))) % c0)) / c0);; Pred  : (c0 > 0) *)
 (* rewrite((x + c1)/c0 - (x - y)/c0, ((y + fold(c0 + c1 - 1)) - ((x + fold(c1 % c0)) % c0))/c0, c0 > 0) *)
@@ -2422,7 +2530,24 @@ Admitted.
 (* rewrite((x + y)/c0 - x/c0, ((x % c0) + y)/c0, c0 > 0) *)
 Lemma subline278 : forall x y c0, c0 > 0 -> (x + y)/c0 - x/c0 == ((x mod c0) + y)/c0.
 Proof.
-Admitted.
+  intros.
+  rewrite mod_eq.
+  cut (x - c0*(x/c0) == x + -(c0*(x/c0))).
+  intros.
+  rewrite H0.
+  rewrite <- mul_opp_r.
+  rewrite add_shuffle0.
+  rewrite mul_comm.
+  rewrite div_add.
+  rewrite add_opp_r.
+  reflexivity.
+  apply lt_neq_ooo.
+  assumption.
+  rewrite add_opp_r.
+  reflexivity.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* ;; Before: ((_0 / c0) - ((_0 - _1) / c0)) After : (((_1 + fold((c0 - 1))) - (_0 % c0)) / c0);; Pred  : (c0 > 0) *)
 (* rewrite(x/c0 - (x - y)/c0, ((y + fold(c0 - 1)) - (x % c0))/c0, c0 > 0) *)
@@ -2434,8 +2559,14 @@ Admitted.
 (* rewrite((x - y)/c0 - x/c0, ((x % c0) - y)/c0, c0 > 0)) *)
 Lemma subline280 : forall x y c0, c0 > 0 -> (x - y)/c0 - x/c0 == ((x mod c0) - y)/c0.
 Proof.
-Admitted.
-
+  intros.
+  rewrite <- add_opp_r.
+  rewrite <- add_opp_r.
+  rewrite <- add_opp_r.
+  rewrite add_opp_r with (m := x/c0).
+  apply subline278.
+  assumption.
+Qed.
 
 
 
