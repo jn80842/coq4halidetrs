@@ -1573,11 +1573,76 @@ Qed.
 (* rewrite(x * c0 < c1, x < fold((c1 + c0 - 1) / c0), c0 > 0) *)
 Lemma ltline140 : forall x c0 c1, c0 > 0 -> (x * c0) < c1 -> x < (c1 + c0 - 1)/c0.
 Proof.
+Admitted.
+(* proved true in z3 *)
+(*
   intros.
+  cut (x <= c1/c0).
+  intros.
+  cut (x < (c1 + 0)/c0).
+  intros.
+  cut ((c1 + 0)/c0 <= (c1 + c0 - 1)/c0).
+  intros.
+  apply lt_le_trans with (n := x) (m := (c1 + 0)/c0) (p := (c1 + c0 - 1)/c0).
+  assumption.
+  assumption.
+  cut (c1 + 0 <= (c1 + c0 - 1)).
+  intros.
+  apply div_le_mono.
+  assumption.
+  assumption.
+  rewrite <- add_sub_assoc.
+  cut (0 <= c0 - 1).
+  intros.
+  apply add_le_mono_l.
+  assumption.
+  rewrite lt_le_pred in H.
+  rewrite succ_le_mono in H.
+  rewrite <- one_succ in H.
+  rewrite succ_pred in H.
+  rewrite add_le_mono_r with (p := -1) in H.
+  rewrite add_opp_r in H.
+  rewrite sub_diag in H.
+  rewrite add_opp_r in H.
+  assumption.
+  rewrite add_0_r.
+  cut (x ~= c1/c0).
+  intros.
+  rewrite le_neq.
+  auto.
+  
+  assumption.
+
+  rewrite mul_lt_mono_pos_r with (p := c0) in H0.
+  apply lt_asymm in H1.
+  discriminate.
+  apply lt_le_incl in H0.
+
+  rewrite div_mul in H0.
+  rewrite div_le_mono
+
+  cut (c0 * (c1/c0) <= c1).
+  intros.
+
+
+
+  rewrite <- nlt_succ_r in H.
+  rewrite nlt_ge in H.
   apply lt_le_incl in H0.
   rewrite mul_comm in H0.
   apply div_le_lower_bound in H0.
-Admitted.
+  cut (c0 == 1 \/ c0 > 1).
+  intros.
+  destruct H1.
+  rewrite H1 at 1.
+  rewrite <- add_sub_assoc.
+  rewrite sub_diag.
+  rewrite add_0_r.
+  unfold H.
+  cut (c1/c0 <= (c1 + c0 - 1)/c0).
+  intros.
+  apply le_trans.
+*)
 
 (* ;; Before: (c1 < (_0 * c0)) After : (fold((c1 / c0)) < _0);; Pred  : (c0 > 0) *)
 (* rewrite(c1 < x * c0, fold(c1 / c0) < x, c0 > 0) *)
@@ -2445,13 +2510,165 @@ Proof.
   assumption.
 Qed.
 
+Lemma lt_div_small : forall a b, 0 < a < b -> a/b == 0.
+Proof.
+  intros.
+  cut (0 <= a < b).
+  intros.
+  apply div_small.
+  assumption.
+  destruct H.
+  apply lt_le_incl in H.
+  auto.
+Qed.
+
 (* ;; Before: ((((_0 + c0) / c1) * c1) - _0) After : (-_0 % c1);; Pred  : ((c1 > 0) && ((c0 + 1) == c1)) *)
 (* rewrite(((x + c0)/c1)*c1 - x, (-x) % c1, c1 > 0 && c0 + 1 == c1) *)
-Lemma subline263 : forall x c0 c1, c1 > 0 -> c0 + 1 == c1 -> ((x + c0)/c1) * c1 - x == (- x) mod c1.
+Lemma subline263 : forall x c0 c1 q r, 0<=r<abs c1 -> x == (c1 * q) + r -> c1 > 0 -> c0 + 1 == c1 -> ((x + c0)/c1) * c1 - x == (- x) mod c1.
 Proof.
-Admitted.
+  intros.
+  cut (x mod c1 == 0 \/ x mod c1 ~= 0).
+  intros.
+  destruct H3.
+  rewrite mod_opp_l_z.
+  rewrite add_move_r in H2.
+  rewrite H2.
+  rewrite H0.
+  cut (r == (x mod c1)).
+  intros.
+  rewrite H4.
+  rewrite H3.
+  rewrite add_0_r.
+  rewrite mul_comm with (n := c1) (m := q).
+  rewrite div_add_l.
+  cut ((c1 - 1)/c1 == 0).
+  intros.
+  rewrite H5.
+  rewrite add_0_r.
+  rewrite sub_diag.
+  reflexivity.
+  cut (0 <= c1 - 1).
+  cut (c1 - 1 < c1).
+  intros.
+  rewrite div_small.
+  reflexivity.
+  auto.
+  rewrite sub_1_r.
+  apply lt_pred_l.
+  rewrite sub_1_r.
+  apply lt_le_pred.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply mod_unique in H0.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+(* case in which x mod c1 ~= 0 *)
+  rewrite mod_opp_l_nz.
+  cut (abs c1 == c1).
+  intros.
+  rewrite H4.
+  rewrite mod_eq.
+  rewrite <- add_opp_r with (n := c1).
+  rewrite opp_sub_distr with (n := x) (m := c1 * (x/c1)).
+  rewrite add_comm with (n := -x).
+  rewrite add_assoc.
+  rewrite <- add_opp_r.
+  rewrite add_cancel_r.
+  rewrite <- mul_1_r with (n := c1) at 3.
+  rewrite <- mul_add_distr_l.
+  rewrite mul_comm.
+  rewrite mul_cancel_l.
+  apply eq_sym in H2.
+  rewrite <- sub_move_r in H2.
+  rewrite <- H2.
+  rewrite <- add_opp_r.
+  rewrite add_comm with (n := c1) (m := -1).
+  rewrite add_assoc.
+  rewrite <- mul_1_l with (n := c1) at 1.
+  rewrite div_add.
+  rewrite add_comm.
+  rewrite add_cancel_l.
+  rewrite H0.
+  rewrite <- add_assoc.
+  rewrite mul_comm.
+  rewrite div_add_l.
+  rewrite div_add_l.
+  rewrite add_cancel_l.
+  cut (r < c1).
+  intros.
+  rewrite div_small.
+  rewrite lt_div_small.
+  reflexivity.
+  apply mod_unique in H0.
+  rewrite <- H0 in H3.
+  destruct H.
+  cut (0 < r).
+  intros.
+  auto.
+  apply le_neq.
+  apply neq_sym in H3.
+  auto.
+  assumption.
+  destruct H.
+  apply mod_unique in H0.
+  rewrite <- H0 in H3.
+  cut (0 < r).
+  intros.
+  auto.
+  rewrite lt_le_pred in H7.
+  cut (P r == r + -1).
+  intros.
+  rewrite H8 in H7.
+  cut (P r < c1).
+  intros.
+  rewrite H8 in H9.
+  auto.
+  apply lt_lt_pred.
+  assumption.
+  apply succ_inj_wd.
+  rewrite succ_pred.
+  rewrite <- add_succ_r.
+  rewrite succ_m1.
+  rewrite add_0_r.
+  reflexivity.
+  apply le_neq.
+  Search "neq".
+  cut (0 ~= r).
+  intros.
+  auto.
+  apply neq_sym.
+  assumption.
+  auto.
+  apply lt_le_incl in H1.
+  rewrite <- abs_eq with (n := c1).
+  destruct H.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_le_incl in H1.
+  apply abs_eq.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  auto.
+  apply eq_decidable.
+Qed.
 
-(* ;; Before: (((_0 + _1) / c0) - ((_0 + c1) / c0)) After : ((((_0 + fold((c1 % c0))) % c0) + (_1 - c1)) / c0);; Pred  : (c0 > 0) *)
+(* ;; Before (((_0 + _1) / c0) - ((_0 + c1) / c0)) After : ((((_0 + fold((c1 % c0))) % c0) + (_1 - c1)) / c0);; Pred  : (c0 > 0) *)
 (* rewrite((x + y)/c0 - (x + c1)/c0, (((x + fold(c1 % c0)) % c0) + (y - c1))/c0, c0 > 0) *)
 Lemma subline273 : forall x y c0 c1, c0 > 0 -> (x + y)/c0 - (x + c1)/c0 == (((x + (c1 mod c0)) mod c0) + y - c1)/c0.
 Proof.
