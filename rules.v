@@ -915,6 +915,22 @@ Qed.
 
 (********* SIMPLIFY_DIV ************)
 
+(* rewrite((x / c0 + c1) / c2, (x + fold(c1 * c0)) / fold(c0 * c2),   c0 > 0 && c2 > 0 && !overflows(c0 * c2) && !overflows(c0 * c1)) *)
+Lemma divline119 : forall x c0 c1 c2, c0 > 0 -> c2 > 0 -> ((x / c0) + c1) / c2 == (x + (c1 * c0)) / (c0 * c2).
+Proof.
+  intros x c0 c1 c2 H0 H1.
+  rewrite <- div_add.
+  rewrite div_div.
+  reflexivity.
+  assumption.
+  apply neq_sym.
+  apply lt_neq.
+  assumption.
+  apply neq_sym.
+  apply lt_neq.
+  assumption.
+Qed.
+
 (* rewrite((x * c0) / c1, x / fold(c1 / c0),                          c1 % c0 == 0 && c0 > 0 && c1 / c0 != 0) *)
 Lemma divline120 : forall x c0 c1, c0 > 0 -> c1/c0 ~= 0 -> c1 mod c0 == 0 -> (x*c0)/c1 == x/(c1/c0).
 Proof.
@@ -1467,8 +1483,21 @@ Qed.
 
 (* ;; Before: (ramp(_0, c0) / broadcast(c1)) After : ramp((_0 / c1), fold((c0 / c1)), 1);; Pred  : ((c0 % c1) == 0) *)
 (* rewrite(ramp(x, c0) / broadcast(c1), ramp(x / c1, fold(c0 / c1), lanes), c0 % c1 == 0) *)
-Lemma divline180 : forall x c0 c1 lanes, c1 ~= 0 -> c0 mod c1 == 0 -> (x + c0*lanes)/c1 == x/c1 + (c1/c0)*lanes.
+(* for convenient rewrite c0 as c2*c1 *)
+Lemma divline180 : forall x c2 c1 lanes, c1 ~= 0 -> c2*c1 mod c1 == 0 -> (x + c2*c1*lanes)/c1 == x/c1 + ((c2*c1)/c1)*lanes.
 Proof.
+  intros.
+  rewrite mul_comm with (n := c2).
+  rewrite <- mul_assoc.
+  rewrite mul_comm.
+  rewrite div_add.
+  rewrite <- mul_1_r with (n := c1) at 4.
+  rewrite div_mul_cancel_l.
+  rewrite div_1_r.
+  reflexivity.
+  auto.
+  intuition.
+  rewrite mul_1_l.
 Admitted.
 
 (* ;; Before: (((_0 * c0) + c1) / c2) After : ((_0 + fold((c1 / c0))) / fold((c2 / c0)));; Pred  : (((c2 > 0) && (c0 > 0)) && ((c2 % c0) == 0)) *)
@@ -2741,6 +2770,7 @@ Admitted.
 (* rewrite(x/c0 - (x + y)/c0, ((fold(c0 - 1) - y) - (x % c0))/c0, c0 > 0) *)
 Lemma subline277 : forall x y c0, c0 > 0 -> x/c0 - (x + y)/c0 == (((c0 - 1) - y) - (x mod c0))/c0.
 Proof.
+  intros.
 Admitted.
 
 (* ;; Before: (((_0 + _1) / c0) - (_0 / c0)) After : (((_0 % c0) + _1) / c0);; Pred  : (c0 > 0) *)
@@ -2770,7 +2800,21 @@ Qed.
 (* rewrite(x/c0 - (x - y)/c0, ((y + fold(c0 - 1)) - (x % c0))/c0, c0 > 0) *)
 Lemma subline279 : forall x y c0, c0 > 0 -> x/c0 - (x - y)/c0 == (y + (c0 - 1) - (x mod c0))/c0.
 Proof.
-Admitted.
+  intros.
+  rewrite mod_eq.
+  cut (x - c0*(x/c0) == x + -(c0*(x/c0))).
+  intros.
+  rewrite H0.
+  rewrite <- add_opp_r with (n := y + (c0 - 1)).
+  rewrite opp_add_distr.
+  rewrite opp_involutive.
+  rewrite add_assoc.
+  rewrite mul_comm.
+  rewrite div_add.
+  rewrite add_shuffle0.
+  rewrite add_comm with (n := y) (m := -x).
+  rewrite add_comm with (m := x/c0).
+  
 
 (* ;; Before: (((_0 - _1) / c0) - (_0 / c0)) After : (((_0 % c0) - _1) / c0);; Pred  : (c0 > 0) *)
 (* rewrite((x - y)/c0 - x/c0, ((x % c0) - y)/c0, c0 > 0)) *)
