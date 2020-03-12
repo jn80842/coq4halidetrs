@@ -765,18 +765,25 @@ Qed.
 
 Lemma lt_le_plus_one : forall n, 0 < n -> 1 <= n.
 Proof.
+  intros.
+  rewrite one_succ.
+  apply le_succ_l.
+  assumption.
+Qed.
+
+Lemma mod_lt_denominator : forall a b, a mod b < abs b.
+Proof.
 Admitted.
 
-
-Lemma pos_div_round_down : forall a b r, 0 <= r < b -> (a + r)/b == a/b.
+Lemma mod_gt_z : forall a b, 0 <= a mod b.
 Proof.
-  intros.
 Admitted.
 
-
-Lemma mul_div_round_down : forall a b, b > 0 -> a mod b == 0 -> b * ((a + (b - 1)) / b) == a.
+Lemma pos_div_round_down_mod_z : forall a b, b > 0 -> a mod b == 0 -> a/b == (a + b - 1)/b.
 Proof.
   intros.
+  cut (b ~= 0).
+  intros H00.
   cut ((a + b - 1) mod b == (a + b - 1) - b * ((a + b - 1)/b)).
   intros H1.
   rewrite <- add_sub_assoc in H1.
@@ -789,7 +796,17 @@ Proof.
   rewrite add_comm with (n := a) (m := (b - 1)) in H1.
   rewrite <- add_move_r in H1.
   rewrite add_cancel_l in H1.
+  cut (a == b*(a/b)).
+  intros H3.
+  rewrite H3 in H1 at 2.
+  rewrite <- mul_cancel_l with (p := b).
+  rewrite <- add_sub_assoc. 
   rewrite add_comm with (n := a) (m := b - 1).
+  apply eq_sym.
+  assumption.
+  assumption.
+  rewrite <- div_exact in H0.
+  assumption.
   assumption.
   assumption.
   split.
@@ -800,38 +817,82 @@ Proof.
   rewrite <- add_opp_r.
   rewrite <- add_lt_mono_l.
   apply lt_m1_0.
-  apply lt_neq_ooo.
   assumption.
   apply mod_eq.
+  assumption.
   apply lt_neq_ooo.
   assumption.
 Qed.
 
-Lemma div_round_down : forall a b, b > 0 -> a mod b == 0 -> (a + (b - 1))/b == a/b.
+Lemma pos_div_round_down_mod_nz : forall a b, b > 0 -> a mod b ~= 0 -> (a + b - 1)/b == a/b + 1.
 Proof.
   intros.
-  rewrite <- mul_cancel_l with (p := b).
-  rewrite <- div_exact in H0.
-  rewrite <- H0.
-  apply mul_div_round_down.
+  cut (b ~= 0).
+  intros H00.
+  cut (a mod b == a - b * (a/b)).
+  intros H1.
+  apply eq_sym in H1.
+  rewrite sub_move_r in H1.
+  rewrite <- add_cancel_r with (p := (b - 1)) in H1.
+  rewrite <- add_opp_r in H1 at 2.
+  rewrite add_assoc in H1.
+  rewrite <- add_assoc with (n := a mod b) in H1.
+  rewrite <- mul_1_r with (n := b) in H1 at 5.
+  rewrite <- mul_add_distr_l in H1.
+  rewrite add_comm with (n := a mod b) in H1.
+  rewrite add_sub_assoc in H1.
+  cut (a/b + 1 == (a + b)/b).
+  intros H2.
+  rewrite H2 in H1.
+  rewrite H2.
+  apply eq_sym.
+  apply div_unique with (a := a + b - 1) (b := b) (q := (a + b)/b) (r := a mod b + -1).
+  constructor.
+  rewrite add_opp_r.
+  rewrite le_0_sub.
+  rewrite <- add_0_r with (n := 1).
+  rewrite add_1_l.
+  rewrite le_succ_l.
+  apply le_neq.
+  constructor.
+  apply mod_gt_z.
+  apply neq_sym.
   assumption.
-  apply div_exact.
-  apply lt_neq_ooo.
+  cut (-1 < 0).
+  cut (a mod b < abs b).
+  intros H3 H4.
+  rewrite <- add_0_r with (n := abs b).
+  apply add_lt_mono.
+  apply mod_lt_denominator.
+  assumption.
+  apply mod_lt_denominator.
+  apply lt_m1_0.
+  rewrite <- mul_1_l with (n := b) at 3.
+  rewrite div_add.
+  rewrite mul_add_distr_l.
+  rewrite mul_1_r.
+  rewrite <- !add_assoc.
+  rewrite add_comm with (m := a mod b + -1).
+  rewrite <- add_assoc with (n := a mod b).
+  rewrite add_comm with (n := -1) (m := b).
+  rewrite !add_assoc.
+  rewrite add_opp_r.
+  rewrite sub_cancel_r.
+  rewrite add_cancel_r.
+  apply eq_sym.
+  rewrite add_move_l.
+  apply mod_eq.
   assumption.
   assumption.
-  apply lt_neq_ooo.
+  rewrite <- mul_1_l with (n := b) at 2.
+  rewrite div_add.
+  reflexivity.
+  assumption.
+  apply mod_eq.
   assumption.
   apply lt_neq_ooo.
   assumption.
 Qed.
-
-Lemma mod_lt_denominator : forall a b, a mod b < abs b.
-Proof.
-Admitted.
-
-Lemma mod_gt_z : forall a b, 0 <= a mod b.
-Proof.
-Admitted.
 
  (* rewrite le_trans with (n := 0) (m := 1). *)
 
@@ -1836,81 +1897,6 @@ Proof.
   apply le_ge_cases.
 Qed.
 
-Lemma rounding1 : forall a b, b > 0 -> a mod b == 0 -> a/b == (a + b - 1)/b.
-Proof.
-Admitted.
-
-Lemma rounding2 : forall a b, b > 0 -> a mod b ~= 0 -> (a + b - 1)/b == a/b + 1.
-Proof.
-  intros.
-  cut (b ~= 0).
-  intros H00.
-  cut (a mod b == a - b * (a/b)).
-  intros H1.
-  apply eq_sym in H1.
-  rewrite sub_move_r in H1.
-  rewrite <- add_cancel_r with (p := (b - 1)) in H1.
-  rewrite <- add_opp_r in H1 at 2.
-  rewrite add_assoc in H1.
-  rewrite <- add_assoc with (n := a mod b) in H1.
-  rewrite <- mul_1_r with (n := b) in H1 at 5.
-  rewrite <- mul_add_distr_l in H1.
-  rewrite add_comm with (n := a mod b) in H1.
-  rewrite add_sub_assoc in H1.
-  cut (a/b + 1 == (a + b)/b).
-  intros H2.
-  rewrite H2 in H1.
-  rewrite H2.
-  apply eq_sym.
-  apply div_unique with (a := a + b - 1) (b := b) (q := (a + b)/b) (r := a mod b + -1).
-  constructor.
-  rewrite add_opp_r.
-  rewrite le_0_sub.
-  rewrite <- add_0_r with (n := 1).
-  rewrite add_1_l.
-  rewrite le_succ_l.
-  apply le_neq.
-  constructor.
-  apply mod_gt_z.
-  apply neq_sym.
-  assumption.
-  cut (-1 < 0).
-  cut (a mod b < abs b).
-  intros H3 H4.
-  rewrite <- add_0_r with (n := abs b).
-  apply add_lt_mono.
-  apply mod_lt_denominator.
-  assumption.
-  apply mod_lt_denominator.
-  apply lt_m1_0.
-  rewrite <- mul_1_l with (n := b) at 3.
-  rewrite div_add.
-  rewrite mul_add_distr_l.
-  rewrite mul_1_r.
-  rewrite <- !add_assoc.
-  rewrite add_comm with (m := a mod b + -1).
-  rewrite <- add_assoc with (n := a mod b).
-  rewrite add_comm with (n := -1) (m := b).
-  rewrite !add_assoc.
-  rewrite add_opp_r.
-  rewrite sub_cancel_r.
-  rewrite add_cancel_r.
-  apply eq_sym.
-  rewrite add_move_l.
-  apply mod_eq.
-  assumption.
-  assumption.
-  rewrite <- mul_1_l with (n := b) at 2.
-  rewrite div_add.
-  reflexivity.
-  assumption.
-  apply mod_eq.
-  assumption.
-  apply lt_neq_ooo.
-  assumption.
-Qed.
-
-
 (* lt143 *)
 (* rewrite(x * c0 < c1, x < fold((c1 + c0 - 1) / c0), c0 > 0, "lt143") *)
 Lemma lt143 : forall x c0 c1, c0 > 0 -> x * c0 < c1 -> x < (c1 + c0 - 1)/c0.
@@ -1919,7 +1905,7 @@ Proof.
   cut (c1 mod c0 == 0 \/ c1 mod c0 ~= 0).
   intros.
   destruct H1.
-  rewrite <- rounding1.
+  rewrite <- pos_div_round_down_mod_z.
   rewrite mul_lt_mono_pos_l with (p := c0).
   rewrite <- div_exact in H1.
   rewrite <- H1.
@@ -1930,7 +1916,7 @@ Proof.
   assumption.
   assumption.
   assumption.
-  rewrite rounding2.
+  rewrite pos_div_round_down_mod_nz.
   cut (c1 < c0 * (c1/c0 + 1)).
   intros.
   rewrite mul_lt_mono_pos_l with (p := c0).
@@ -1991,11 +1977,55 @@ Qed.
 (* rewrite(c0 < x / c1, fold((c0 + 1) * c1 - 1) < x, c1 > 0, "lt149") *)
 Lemma lt149 : forall x c0 c1, c1 > 0 -> c0 < x / c1 -> ((c0 + 1) * c1 - 1) < x.
 Proof.
+  intros.
 Admitted.
 
 (* lt229 *)
 (* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0, "lt229") *)
-
+Lemma lt229 : forall x y c0 c1, c0 > 0 -> x * c0 < y * c0 + c1 -> x < y + (c1 + c0 - 1)/c0.
+Proof.
+  intros.
+  cut (c0 ~= 0).
+  intros H00.
+  cut (c1 mod c0 == 0 \/ c1 mod c0 ~= 0).
+  intros.
+  destruct H1.
+  rewrite <- div_exact in H1.
+  rewrite H1 in H0.
+  rewrite <- pos_div_round_down_mod_z.
+  rewrite mul_lt_mono_pos_l with (p := c0).
+  rewrite mul_add_distr_l.
+  rewrite mul_comm with (n := c0) (m := x).
+  rewrite mul_comm with (n := c0) (m := y).
+  assumption.
+  assumption.
+  assumption.
+  apply div_exact.
+  assumption.
+  assumption.
+  assumption.
+  rewrite <- lt_sub_lt_add_l in H0.
+  cut (c1 < c0*(c1/c0 + 1)).
+  intros.
+  rewrite <- lt_sub_lt_add_l.
+  rewrite mul_lt_mono_pos_l with (p := c0).
+  rewrite mul_sub_distr_l.
+  rewrite pos_div_round_down_mod_nz.
+  rewrite mul_comm with (n := c0) (m := x).
+  rewrite mul_comm with (n := c0) (m := y).
+  apply lt_trans with (n := x * c0 - y * c0) (m := c1) (p := c0 * (c1 / c0 + 1)).
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  rewrite add_1_r.
+  apply mul_succ_div_gt.
+  assumption.
+  apply eq_decidable.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* lt230 *)
 (* rewrite(x * c0 + c1 < y * c0, x + fold(c1/c0) < y, c0 > 0, "lt230") *)
@@ -2778,7 +2808,7 @@ Proof.
   intros.
   destruct H0.
   rewrite add_sub_assoc.
-  rewrite <- rounding1.
+  rewrite <- pos_div_round_down_mod_z.
   rewrite <- div_opp_l_z.
   rewrite add_opp_r.
   reflexivity.
@@ -2790,7 +2820,7 @@ Proof.
   assumption.
   assumption.
   rewrite add_sub_assoc.
-  rewrite rounding2.
+  rewrite pos_div_round_down_mod_nz.
   rewrite div_opp_l_nz.
   rewrite sgn_pos.
   rewrite <- add_opp_r with (m := 1).
@@ -2810,7 +2840,10 @@ Proof.
   apply lt_neq_ooo.
   assumption.
   rewrite lt_0_sub.
+  rewrite <- abs_eq with (n := c2) at 2.
   apply mod_lt_denominator.
+  apply lt_le_incl.
+  assumption.
   apply lt_le_incl.
   assumption.
   assumption.
@@ -2821,61 +2854,38 @@ Proof.
   assumption.
 Qed.
 
-
-
 (* sub246 *)
 (* rewrite(c0 - (x + c1)/c2, (fold(c0*c2 - c1 + c2 - 1) - x)/c2, c2 > 0, "sub246") *)
 Lemma sub246 : forall x c0 c1 c2, c2 > 0 -> c0 - (x + c1)/c2 == (c0*c2 - c1 + c2 - 1 - x)/c2.
 Proof.  
   intros.
-  cut (c2 ~= 0).
-  cut ((x + c1) mod c2 == 0 \/ (x + c1) mod c2 ~= 0).
-  intros.
-  destruct H0.
-  rewrite <- add_opp_r with (n := c0 * c2).
-  rewrite <- add_assoc.
-  rewrite <- add_opp_r with (m := 1).
-  rewrite <- add_opp_r with (m := x).
-  rewrite <- add_assoc with (n := c0 * c2).
-  rewrite <- add_assoc with (n := c0 * c2).
-  rewrite div_add_l.
-  rewrite <- add_assoc with (n := -c1).
-  rewrite add_comm with (m := (c2 + -1)).
-  rewrite <- add_assoc.
-  rewrite <- add_assoc.
-  rewrite add_assoc.
-  rewrite add_comm with (n := c2 + -1).
-  rewrite add_opp_r with (n := c2) (m := 1).
-  rewrite div_round_down.
-  rewrite <- opp_add_distr.
-  rewrite div_opp_l_z.
+  rewrite add_comm with (n := x) (m := c1).
+  rewrite <- opp_involutive with (n := x).
   rewrite add_opp_r.
-  rewrite add_comm with (n := c1) (m := x).
+  rewrite sub245.
+  rewrite opp_involutive.
+  rewrite add_opp_r.
   reflexivity.
   assumption.
-  rewrite add_comm with (m := x) (n := c1).
-  assumption.
-  assumption.
-  rewrite <- opp_add_distr.
-  apply mod_opp_l_z.
-  assumption.
-  rewrite add_comm with (n := c1) (m := x).
-  assumption.
-  assumption.
-  rewrite <- add_opp_r with (n := c0 * c2).
-  rewrite <- add_assoc.
-  rewrite <- add_opp_r with (m := 1).
-  rewrite <- add_opp_r with (m := x).
-  rewrite <- add_assoc with (n := c0 * c2).
-  rewrite <- add_assoc with (n := c0 * c2).
-  rewrite div_add_l.
-Admitted.
+Qed.
 
 (* sub247 *)
 (* rewrite(x - (x + y)/c0, (x*fold(c0 - 1) - y + fold(c0 - 1))/c0, c0 > 0, "sub247") *)
 Lemma sub247 : forall x y c0, c0 > 0 -> x - (x + y)/c0 == (x *(c0 - 1) - y + (c0 - 1))/c0.
 Proof.
-Admitted.
+  intros.
+  rewrite sub246.
+  rewrite <- add_opp_r with (m := x).
+  rewrite add_comm with (m := - x).
+  rewrite <- !add_opp_r.
+  rewrite !add_assoc.
+  rewrite add_comm with (n := -x).
+  rewrite <- mul_1_r with (n := -x).
+  rewrite mul_opp_comm.
+  rewrite <- mul_add_distr_l.
+  reflexivity.
+  assumption.
+Qed.
 
 (* sub248 *)
 (* rewrite(x - (x - y)/c0, (x*fold(c0 - 1) + y + fold(c0 - 1))/c0, c0 > 0, "sub248") *)
@@ -2901,6 +2911,19 @@ Qed.
 
 (* sub250 *)
 (* rewrite(x - (y - x)/c0, (x*fold(c0 + 1) - y + fold(c0 - 1))/c0, c0 > 0, "sub250") *)
+Lemma sub250 : forall x y c0, c0 > 0 -> x - (y - x)/c0 == (x * (c0 + 1) - y + (c0 - 1))/c0.
+Proof.
+  intros.
+  rewrite sub245.
+  rewrite add_comm with (m := x).
+  rewrite <- !add_opp_r.
+  rewrite !add_assoc.
+  rewrite add_comm with (n := x) (m := x * c0).
+  rewrite <- mul_1_r with (n := x) at 2.
+  rewrite mul_add_distr_l.
+  reflexivity.
+  assumption.
+Qed.
 
 (* sub251 *)
 (* rewrite((x + y)/c0 - x, (x*fold(1 - c0) + y)/c0, "sub251") *)
@@ -2963,7 +2986,7 @@ Qed.
 Lemma sub258 : forall x c0 c1, c1 > 0 -> c0 + 1 == c1 -> ((x + c0)/c1)*c1 - x == (- x) mod c1.
 Proof.
   intros.
-
+Admitted.
 (*  cut (c1 ~= 0).
   cut (x mod c1 == 0 \/ x mod c1 ~= 0).
   intros H1 H2.
@@ -3201,8 +3224,81 @@ Qed.
 (* sub271 *)
 (* rewrite((x + c1)/c0 - (x - y)/c0, ((y + fold(c0 + c1 - 1)) - ((x + fold(c1 % c0)) % c0))/c0, c0 > 0, "sub271") *)
 
+Lemma neg_mod_nz : forall x y, y > 0 -> x mod y ~= 0 -> (- x) mod y ~= 0.
+Proof.
+  intros.
+  rewrite mod_opp_l_nz.
+  cut (x mod y < abs y).
+  intros.
+  rewrite <- lt_0_sub in H1.
+  apply neq_sym.
+  apply lt_neq.
+  assumption.
+  apply mod_lt_denominator.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+Qed.
+
 (* sub272 *)
 (* rewrite(x/c0 - (x + y)/c0, ((fold(c0 - 1) - y) - (x % c0))/c0, c0 > 0, "sub272") *)
+Lemma sub272 : forall x y c0, c0 > 0 -> x/c0 - (x + y)/c0 == ((c0 - 1) - y - (x mod c0))/c0.
+Proof.
+  intros.
+  cut (c0 ~= 0).
+  intros H00.
+  rewrite mod_eq.
+  rewrite <- add_opp_r with (m := (x - c0 * (x/c0))).
+  rewrite opp_sub_distr.
+  rewrite !add_assoc.
+  rewrite mul_comm.
+  rewrite div_add.
+  rewrite add_comm with (m := x / c0).
+  rewrite <- add_opp_r with (m := y).
+  rewrite add_comm with (m := - x).
+  rewrite add_comm with (m := - y).
+  rewrite add_assoc.
+  rewrite <- opp_add_distr.
+  cut ((x + y) mod c0 == 0 \/ (x + y) mod c0 ~= 0).
+  intros H0.
+  destruct H0.
+  rewrite add_sub_assoc.
+  cut (-(x + y) mod c0 == 0).
+  intros.
+  rewrite <- pos_div_round_down_mod_z.
+  rewrite div_opp_l_z.
+  rewrite add_opp_r.
+  reflexivity.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  apply mod_opp_l_z.
+  assumption.
+  assumption.
+  cut (-(x + y) mod c0 ~= 0).
+  intros.
+  rewrite add_sub_assoc.
+  rewrite pos_div_round_down_mod_nz.
+  rewrite div_opp_l_nz.
+  rewrite sgn_pos.
+  rewrite sub_simpl_r.
+  rewrite add_opp_r.
+  reflexivity.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  apply neg_mod_nz.
+  assumption.
+  assumption.
+  apply eq_decidable.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 
 (* sub273 *)
@@ -3230,6 +3326,17 @@ Qed.
 
 (* sub274 *)
 (* rewrite(x/c0 - (x - y)/c0, ((y + fold(c0 - 1)) - (x % c0))/c0, c0 > 0, "sub274") *)
+Lemma sub274 : forall x y c0, c0 > 0 -> x/c0 - (x - y)/c0 == (y + (c0 - 1) - (x mod c0))/c0.
+Proof.
+  intros.
+  rewrite <- add_opp_r with (m := y).
+  rewrite sub272.
+  rewrite <- add_opp_r with (m := - y).
+  rewrite add_comm with (n := c0 - 1).
+  rewrite opp_involutive with (n := y).
+  reflexivity.
+  assumption.
+Qed.
 
 (* sub275 *)
 (* rewrite((x - y)/c0 - x/c0, ((x % c0) - y)/c0, c0 > 0, "sub275") *)
