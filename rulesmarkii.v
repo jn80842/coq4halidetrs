@@ -1516,12 +1516,174 @@ Proof.
   apply eq_decidable.
 Qed.
 
+Lemma div176_lemma : forall c0 c1, c1 > 1 -> (c0 + 1) mod c1 == 0 -> c0 mod c1 ~= 0.
+Proof.
+  intros c0 c1 H H0.
+  rewrite <- add_mod_idemp_l in H0.
+  unfold not.
+  intros H1.
+  rewrite H1 in H0.
+  rewrite add_0_l in H0.
+  cut (1 mod c1 == 1).
+  intros H2.
+  rewrite H2 in H0.
+  rewrite one_succ in H0.
+  cut (S 0 ~= 0).
+  intros.
+  contradiction.
+  apply neq_succ_diag_l.
+  apply mod_small.
+  cut (0 <= 1).
+  intros.
+  auto.
+  apply le_0_1.
+  cut (0 < 1).
+  intros.
+  apply lt_neq_ooo.
+  apply lt_trans with (n := 0) (m := 1) (p := c1).
+  assumption.
+  assumption.
+  apply lt_0_1.
+Qed.
+
+Lemma one_gt : forall n, 1 < n -> 0 <= 1 < n.
+Proof.
+  intros.
+  cut (0 <= 1).
+  intros.
+  auto.
+  apply le_0_1.
+Qed.
+
+Lemma gt_one_nz : forall n, 1 < n -> n ~= 0.
+Proof.
+  intros.
+  apply lt_neq_ooo.
+  cut (0 < 1).
+  intros.
+  apply lt_trans with (n := 0) (m := 1) (p := n).
+  assumption.
+  assumption.
+  apply lt_0_1.
+Qed.
+
+Lemma div176_lemma2 : forall c0 c1, c1 > 1 -> (c0 + 1) mod c1 == 0 -> c0 mod c1 == (c1 - 1).
+Proof.
+  intros.
+  cut (c0 + 1 == c1*((c0 + 1)/c1)).
+  intros.
+  rewrite add_move_r in H1.
+  rewrite H1.
+  rewrite <- add_opp_r.
+  rewrite <- add_mod_idemp_l.
+  cut (c0 + 1 == c1*((c0 + 1)/c1)).
+  intros.
+  rewrite <- H2.
+  rewrite H0.
+  rewrite add_0_l.
+  rewrite mod_opp_l_nz.
+  rewrite mod_small.
+  rewrite abs_eq.
+  reflexivity.
+  rewrite one_succ in H.
+  apply lt_succ_l in H.
+  apply lt_le_incl.
+  assumption.
+  apply one_gt.
+  assumption.
+  apply gt_one_nz.
+  assumption.
+  rewrite mod_small.
+  rewrite one_succ.
+  apply neq_succ_diag_l.
+  apply one_gt.
+  assumption.
+  apply div_exact.
+  apply gt_one_nz.
+  assumption.
+  assumption.
+  apply gt_one_nz.
+  assumption.
+  apply div_exact.
+  apply gt_one_nz.
+  assumption.
+  assumption.
+Qed.
+
 (* div176 *)
 (* rewrite((c0 - y)/c1, fold(c0 / c1) - y / c1, (c0 + 1) % c1 == 0 && c1 > 0, "div176") *)
 Lemma div176 : forall y c0 c1, (c0 + 1) mod c1 == 0 -> c1 > 0 -> (c0 - y)/c1 == (c0 / c1) - y / c1.
 Proof.
-Admitted.
-
+  intros.
+  rewrite <- le_succ_l in H0.
+  rewrite <- one_succ in H0.
+  cut (0 < c1).
+  intros H00.
+  cut (c1 == 1 \/ c1 > 1).
+  intros.
+  destruct H1.
+  rewrite H1.
+  rewrite !div_1_r.
+  reflexivity.
+  cut (c0 == c1*(c0/c1) + (c1 - 1)).
+  intros H3.
+  rewrite H3 at 1.
+  rewrite <- add_opp_r.
+  rewrite <- add_assoc.
+  rewrite mul_comm.
+  rewrite div_add_l.
+  rewrite add_comm with (n := (c1 - 1)).
+  rewrite add_sub_assoc.
+  cut (y mod c1 == 0 \/ y mod c1 ~= 0 ).
+  intros.
+  destruct H2.
+  rewrite <- pos_div_round_down_mod_z.
+  rewrite div_opp_l_z.
+  rewrite add_opp_r.
+  reflexivity.
+  apply gt_one_nz.
+  assumption.
+  assumption.
+  assumption.
+  apply mod_opp_l_z.
+  apply gt_one_nz.
+  assumption.
+  assumption.
+  rewrite pos_div_round_down_mod_nz.
+  rewrite div_opp_l_nz.
+  rewrite sgn_pos.
+  rewrite <- add_opp_r.
+  rewrite <- add_assoc.
+  rewrite add_opp_diag_l.
+  rewrite add_0_r.
+  rewrite add_opp_r.
+  reflexivity.
+  assumption.
+  apply gt_one_nz.
+  assumption.
+  assumption.
+  assumption.
+  apply neg_mod_nz.
+  assumption.
+  assumption.
+  apply eq_decidable.
+  apply lt_neq_ooo.
+  assumption.
+  rewrite <- div176_lemma2 with (c0 := c0).
+  apply eq_sym.
+  rewrite add_move_l.
+  apply mod_eq.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  assumption.
+  rewrite le_lteq in H0.
+  intuition.
+  rewrite one_succ in H0.
+  apply le_succ_l in H0.
+  assumption.
+Qed.
+  
 (* div178 (Originally 160 *)
 (* denominator_non_zero && rewrite((x + y)/x, y/x + 1, "div178") *)
 Lemma div178 : forall x y, x ~= 0 -> (x + y)/x == (y/x + 1).
@@ -1994,7 +2156,23 @@ Qed.
 Lemma lt149 : forall x c0 c1, c1 > 0 -> c0 < x / c1 -> ((c0 + 1) * c1 - 1) < x.
 Proof.
   intros.
-Admitted.
+  cut (((c0 + 1) * c1 - 1) <= x).
+  intros.
+  cut (((c0 + 1) * c1 - 1)/c1 <= x/c1).
+  intros.
+  rewrite mul_add_distr_r in H2.
+  rewrite mul_1_l in H2.
+  rewrite <- pos_div_round_down_mod_z in H2.
+  rewrite div_mul in H2.
+  rewrite div_le_mono with (c := c1) in H1.
+
+
+  apply lt_trans.
+  rewrite mul_lt_mono_pos_l with (p := c1) in H0.
+  cut (c1*(x/c1) <= x).
+  cut (c1*c0 < x).
+  intros.
+  rewrite lt_le_trans in H3.
 
 (* lt229 *)
 (* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0, "lt229") *)
