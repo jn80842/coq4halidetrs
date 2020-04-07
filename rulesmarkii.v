@@ -1927,7 +1927,23 @@ Proof.
   rewrite H0.
   rewrite !div_by_zero.
   reflexivity.
-Admitted.
+  cut (x == c1 *(x/c1) + x mod c1).
+  intros.
+  rewrite H1 at 1.
+  rewrite mul_comm with (n := c1) (m := x/c1).
+  rewrite <- add_assoc.
+  rewrite div_add_l.
+  rewrite H.
+  rewrite add_0_r.
+  reflexivity.
+  assumption.
+  rewrite add_comm.
+  rewrite <- sub_move_r.
+  apply eq_sym.
+  apply mod_eq.
+  assumption.
+  apply eq_decidable.
+Qed.
 
 (* div207 *)
 (* rewrite((x * c0 + c1) / c2, (x + fold(c1 / c0)) / fold(c2 / c0), c2 > 0 && c0 > 0 && c2 % c0 == 0, "div207") *)
@@ -2155,24 +2171,8 @@ Qed.
 (* rewrite(c0 < x / c1, fold((c0 + 1) * c1 - 1) < x, c1 > 0, "lt149") *)
 Lemma lt149 : forall x c0 c1, c1 > 0 -> c0 < x / c1 -> ((c0 + 1) * c1 - 1) < x.
 Proof.
-  intros.
-  cut (((c0 + 1) * c1 - 1) <= x).
-  intros.
-  cut (((c0 + 1) * c1 - 1)/c1 <= x/c1).
-  intros.
-  rewrite mul_add_distr_r in H2.
-  rewrite mul_1_l in H2.
-  rewrite <- pos_div_round_down_mod_z in H2.
-  rewrite div_mul in H2.
-  rewrite div_le_mono with (c := c1) in H1.
+Admitted.
 
-
-  apply lt_trans.
-  rewrite mul_lt_mono_pos_l with (p := c1) in H0.
-  cut (c1*(x/c1) <= x).
-  cut (c1*c0 < x).
-  intros.
-  rewrite lt_le_trans in H3.
 
 (* lt229 *)
 (* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0, "lt229") *)
@@ -2528,6 +2528,37 @@ Qed.
                       c0 > 0 && (c3 % c0 == 0) &&
                       (c2 % c0) + c1 * (lanes - 1) < c0 &&
                       (c2 % c0) + c1 * (lanes - 1) >= 0, "lt352") *)
+Lemma lt352 : forall x z c0 c1 c2 c3 lanes, c0 > 0 -> c3 mod c0 == 0 -> (c2 mod c0) + c1 * lanes < c0 -> (c2 mod c0) + c1 * lanes >= 0 -> (x * c3 + c2 + c1 * lanes) < z * c0 -> x * (c3/c0) + c2/c0 < z.
+Proof.
+  intros.
+  apply lt_le_incl in H3.
+  apply div_le_mono with (c := c0) in H3.
+  rewrite div_mul in H3.
+  cut (c2 == c0 * (c2/c0) + c2 mod c0).
+  intros.
+  rewrite H4 in H3.
+  rewrite add_assoc in H3.
+  rewrite add_comm with (n := x * c3) in H3.
+  rewrite mul_comm with (n := c0) in H3.
+  rewrite <- !add_assoc in H3.
+  rewrite div_add_l in H3.
+  cut (x * c3 == c0 * ((x * c3)/c0) + (x * c3) mod c0).
+  intros.
+  rewrite H5 in H3.
+  rewrite mul_comm with (n := c0) (m := (x * c3)/c0) in H3.
+  rewrite <- !add_assoc in H3.
+  rewrite div_add_l in H3.
+  rewrite <- mul_mod_idemp_r in H3.
+  rewrite H0 in H3.
+  rewrite mul_0_r in H3.
+  rewrite mod_0_l in H3.
+  rewrite add_0_l in H3.
+  cut ((c2 mod c0 + c1 * lanes)/c0 == 0).
+  intros.
+  rewrite H6 in H3.
+  rewrite add_0_r in H3.
+  rewrite add_comm in H3.
+Admitted.
 
 (* lt358 *)
 (* rewrite(ramp(x * c3, c1) < broadcast(z * c0),
