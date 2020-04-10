@@ -910,6 +910,39 @@ Proof.
   assumption.
 Qed.
 
+Lemma div_mul_mod_z : forall a b c, c > 0 -> b mod c == 0 -> (a*b)/c == a*(b/c).
+Proof.
+  intros.
+  cut (c ~= 0).
+  intros H00.
+  rewrite <- mul_cancel_l with (p := c).
+  rewrite mul_assoc.
+  rewrite mul_comm with (n := c) (m := a).
+  rewrite <- mul_assoc.
+  cut (b == c * (b/c)).
+  intros.
+  rewrite <- H1.
+  cut (a * b == c * ((a * b)/c)).
+  intros.
+  rewrite <- H2.
+  reflexivity.
+  rewrite div_exact.
+  rewrite <- mul_mod_idemp_r.
+  rewrite H0.
+  rewrite mul_0_r.
+  rewrite mod_0_l.
+  reflexivity.
+  assumption.
+  assumption.
+  assumption.
+  rewrite div_exact.
+  assumption.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
+
  (* rewrite le_trans with (n := 0) (m := 1). *)
 
 (********* Axioms for new div/mod semantics **)
@@ -2531,34 +2564,92 @@ Qed.
 Lemma lt352 : forall x z c0 c1 c2 c3 lanes, c0 > 0 -> c3 mod c0 == 0 -> (c2 mod c0) + c1 * lanes < c0 -> (c2 mod c0) + c1 * lanes >= 0 -> (x * c3 + c2 + c1 * lanes) < z * c0 -> x * (c3/c0) + c2/c0 < z.
 Proof.
   intros.
+  cut (c0 ~= 0).
+  cut (c2 == c0 * (c2/c0) + c2 mod c0).
+  cut (x*(c3/c0) + c2/c0 ~= z).
+  intros.
   apply lt_le_incl in H3.
   apply div_le_mono with (c := c0) in H3.
   rewrite div_mul in H3.
-  cut (c2 == c0 * (c2/c0) + c2 mod c0).
   intros.
-  rewrite H4 in H3.
+  rewrite H5 in H3.
   rewrite add_assoc in H3.
   rewrite add_comm with (n := x * c3) in H3.
   rewrite mul_comm with (n := c0) in H3.
   rewrite <- !add_assoc in H3.
   rewrite div_add_l in H3.
-  cut (x * c3 == c0 * ((x * c3)/c0) + (x * c3) mod c0).
+  cut (x * c3 == c0 * ((x * c3)/c0)).
   intros.
-  rewrite H5 in H3.
+  rewrite H7 in H3.
   rewrite mul_comm with (n := c0) (m := (x * c3)/c0) in H3.
-  rewrite <- !add_assoc in H3.
   rewrite div_add_l in H3.
-  rewrite <- mul_mod_idemp_r in H3.
-  rewrite H0 in H3.
-  rewrite mul_0_r in H3.
-  rewrite mod_0_l in H3.
-  rewrite add_0_l in H3.
+  rewrite add_comm in H3.
   cut ((c2 mod c0 + c1 * lanes)/c0 == 0).
   intros.
-  rewrite H6 in H3.
+  rewrite H8 in H3.
   rewrite add_0_r in H3.
-  rewrite add_comm in H3.
-Admitted.
+  rewrite div_mul_mod_z in H3.
+  rewrite le_neq.
+  auto.
+  assumption.
+  assumption.
+  apply div_small.
+  auto.
+  assumption.
+  rewrite div_exact.
+  rewrite <- mul_mod_idemp_r.
+  rewrite H0.
+  rewrite mul_0_r.
+  rewrite mod_0_l.
+  reflexivity.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  unfold not.
+  intros.
+  rewrite <- H4 in H3.
+  cut (c2 == c0 * (c2 / c0) + c2 mod c0).
+  intros.
+  rewrite H5 in H3 at 1.
+  rewrite mul_add_distr_r in H3.
+  rewrite <- mul_assoc in H3.
+  rewrite mul_comm with (n := c3/c0) in H3.
+  rewrite <- div_exact in H0.
+  rewrite <- H0 in H3.
+  rewrite mul_comm with (n := c2/c0) in H3.
+  rewrite <- !add_assoc in H3.
+  rewrite 2lt_add_lt_sub_l in H3.
+  rewrite add_comm with (n := x * c3) in H3.
+  rewrite <- add_sub_assoc in H3.
+  rewrite sub_diag in H3.
+  rewrite add_0_r in H3.
+  rewrite sub_diag in H3.
+  apply le_lt_trans with (n := 0) in H3.
+  apply lt_neq_ooo in H3.
+  unfold not in H3.
+  contradiction H3.
+  reflexivity.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  rewrite add_comm.
+  rewrite <- sub_move_r.
+  apply eq_sym.
+  apply mod_eq.
+  apply lt_neq_ooo.
+  assumption.
+  rewrite add_comm.
+  rewrite <- sub_move_r.
+  apply eq_sym.
+  apply mod_eq.
+  apply lt_neq_ooo.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
 
 (* lt358 *)
 (* rewrite(ramp(x * c3, c1) < broadcast(z * c0),
@@ -2566,6 +2657,69 @@ Admitted.
                       c0 > 0 && (c3 % c0 == 0) &&
                       c1 * (lanes - 1) < c0 &&
                       c1 * (lanes - 1) >= 0, "lt358") *)
+Lemma lt358 : forall x z c0 c1 c3 lanes, c0 > 0 -> c3 mod c0 == 0 -> c1 * lanes < c0 -> c1 * lanes >= 0 -> x*c3 + c1 * lanes < z * c0 -> x * (c3 / c0) < z.
+Proof.
+  intros.
+  cut (c0 ~= 0).
+  intros H000.
+  cut (x*(c3/c0) ~= z).
+  intros H00.
+  rewrite le_neq in H3.
+  destruct H3.
+  apply div_le_mono with (c := c0) in H3.
+  rewrite div_mul in H3.
+  cut (x*c3 == c0 * ((x*c3)/c0)).
+  intros.
+  rewrite H5 in H3.
+  rewrite mul_comm with (n := c0) in H3.
+  rewrite div_add_l in H3.
+  cut ((c1 * lanes)/c0 == 0).
+  intros.
+  rewrite H6 in H3.
+  rewrite add_0_r in H3.
+  rewrite div_mul_mod_z in H3.
+  rewrite le_neq.
+  auto.
+  assumption.
+  assumption.
+  rewrite div_small.
+  reflexivity.
+  auto.
+  assumption.
+  rewrite div_exact.
+  rewrite <- mul_mod_idemp_r.
+  rewrite H0.
+  rewrite mul_0_r.
+  rewrite mod_0_l.
+  reflexivity.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  assumption.
+  unfold not.
+  intros.
+  rewrite <- H4 in H3.
+  rewrite <- mul_assoc in H3.
+  rewrite mul_comm with (n := c3/c0) in H3.
+  cut (c3 == c0 * (c3 / c0)).
+  intros.
+  rewrite <- H5 in H3.
+  rewrite lt_add_lt_sub_l in H3.
+  rewrite sub_diag in H3.
+  apply le_lt_trans with (n := 0) in H3.
+  apply lt_neq_ooo in H3.
+  unfold not in H3.
+  contradiction H3.
+  reflexivity.
+  assumption.
+  rewrite div_exact.
+  assumption.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+Qed.
+
 
 (* max193 *)
 (* rewrite(max(x / c0, y / c0), max(x, y) / c0, c0 > 0, "max193") *)
