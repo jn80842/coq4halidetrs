@@ -2204,8 +2204,35 @@ Qed.
 (* rewrite(c0 < x / c1, fold((c0 + 1) * c1 - 1) < x, c1 > 0, "lt149") *)
 Lemma lt149 : forall x c0 c1, c1 > 0 -> c0 < x / c1 -> ((c0 + 1) * c1 - 1) < x.
 Proof.
-Admitted.
+  intros.
+  cut ((c0 + 1) * c1 - 1 < x \/ (c0 + 1) * c1 - 1 >= x).
+  intros.
+  destruct H1.
+  assumption.
+  apply div_le_mono with (c := c1) in H1.
+  rewrite mul_add_distr_r in H1.
+  rewrite mul_1_l in H1.
+  cut (c0 * c1 mod c1 == 0).
+  intros.
+  rewrite <- pos_div_round_down_mod_z in H1.
+  rewrite div_mul in H1.
+  rewrite le_ngt in H1.
+  unfold not in H1.
+  contradiction H1.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  apply mod_mul.
+  apply lt_neq_ooo.
+  assumption.
+  apply mod_mul.
+  apply lt_neq_ooo.
+  assumption.
+  assumption.
+  apply lt_ge_cases.
+Qed.
 
+(* Lemma pos_div_round_down_mod_z : forall a b, b > 0 -> a mod b == 0 -> a/b == (a + b - 1)/b. *)
 
 (* lt229 *)
 (* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0, "lt229") *)
