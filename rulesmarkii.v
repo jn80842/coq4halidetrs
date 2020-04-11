@@ -875,6 +875,8 @@ Proof.
   apply le_neq.
   constructor.
   apply mod_gt_z.
+  apply lt_neq_ooo.
+  assumption.
   apply neq_sym.
   assumption.
   cut (-1 < 0).
@@ -882,9 +884,17 @@ Proof.
   intros H3 H4.
   rewrite <- add_0_r with (n := abs b).
   apply add_lt_mono.
+  rewrite abs_eq.
   apply mod_lt_denominator.
   assumption.
+  apply lt_le_incl.
+  assumption.
+  apply lt_m1_0.
+  rewrite abs_eq.
   apply mod_lt_denominator.
+  assumption.
+  apply lt_le_incl.
+  assumption.
   apply lt_m1_0.
   rewrite <- mul_1_l with (n := b) at 3.
   rewrite div_add.
@@ -906,8 +916,10 @@ Proof.
   rewrite <- mul_1_l with (n := b) at 2.
   rewrite div_add.
   reflexivity.
+  apply lt_neq_ooo.
   assumption.
   apply mod_eq.
+  apply lt_neq_ooo.
   assumption.
   apply lt_neq_ooo.
   assumption.
@@ -917,13 +929,17 @@ Lemma neg_mod_nz : forall x y, y > 0 -> x mod y ~= 0 -> (- x) mod y ~= 0.
 Proof.
   intros.
   rewrite mod_opp_l_nz.
-  cut (x mod y < abs y).
+  cut (x mod y < y).
   intros.
   rewrite <- lt_0_sub in H1.
   apply neq_sym.
   apply lt_neq.
+  rewrite abs_eq.
+  assumption.
+  apply lt_le_incl.
   assumption.
   apply mod_lt_denominator.
+  assumption.
   apply lt_neq_ooo.
   assumption.
   assumption.
@@ -1303,6 +1319,7 @@ Proof.
   rewrite <- !add_opp_r.
   rewrite add_comm with (n := z) (m := - y).
   apply div144.
+  assumption.
 Qed.
 
 (* div146 *)
@@ -1965,7 +1982,6 @@ Proof.
   apply eq_decidable.
 Qed.
 
-
 (* div201 *)
 (* rewrite(ramp(x, c0) / broadcast(c1), broadcast(x / c1, lanes),
                        // First and last lanes are the same when...
@@ -2179,8 +2195,6 @@ Proof.
   apply eq_decidable.
 Qed.
 
-
-
 (* lt145 *)
 (* rewrite(c1 < x * c0, fold(c1 / c0) < x, c0 > 0, "lt145") *)
 Lemma lt145 : forall x c0 c1, c0 > 0 -> c1 < x * c0 -> (c1 / c0) < x.
@@ -2195,9 +2209,6 @@ Proof.
   assumption.
   assumption.
 Qed.
-
-
-
 
 (* lt148 *)
 (* rewrite(x / c0 < c1, x < c1 * c0, c0 > 0, "lt148") *)
@@ -2250,8 +2261,6 @@ Proof.
   assumption.
   apply lt_ge_cases.
 Qed.
-
-(* Lemma pos_div_round_down_mod_z : forall a b, b > 0 -> a mod b == 0 -> a/b == (a + b - 1)/b. *)
 
 (* lt229 *)
 (* rewrite(x * c0 < y * c0 + c1, x < y + fold((c1 + c0 - 1)/c0), c0 > 0, "lt229") *)
@@ -3265,9 +3274,7 @@ Proof.
   apply lt_neq_ooo.
   assumption.
   rewrite lt_0_sub.
-  rewrite <- abs_eq with (n := c2) at 2.
   apply mod_lt_denominator.
-  apply lt_le_incl.
   assumption.
   apply lt_le_incl.
   assumption.
@@ -3535,17 +3542,15 @@ Proof.
   cut (r < c1).
   intros.
   rewrite div_small.
-  rewrite lt_div_small.
+  rewrite div_small.
   reflexivity.
+  rewrite abs_eq in H.
+  assumption.
   apply mod_unique in H0.
   rewrite <- H0 in H3.
   destruct H.
-  cut (0 < r).
-  intros.
-  auto.
-  apply le_neq.
-  apply neq_sym in H3.
-  auto.
+  apply lt_le_incl.
+  assumption.
   assumption.
   destruct H.
   apply mod_unique in H0.
@@ -3570,7 +3575,6 @@ Proof.
   rewrite add_0_r.
   reflexivity.
   apply le_neq.
-  Search "neq".
   cut (0 ~= r).
   intros.
   auto.
@@ -3681,7 +3685,6 @@ Proof.
   cut ((x + y) mod c0 == 0 \/ (x + y) mod c0 ~= 0).
   intros H0.
   destruct H0.
-
   cut (-(x + y) mod c0 == 0).
   intros.
   rewrite <- pos_div_round_down_mod_z.
@@ -3856,18 +3859,5 @@ Proof.
   apply sub273.
   assumption.
 Qed.
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 End ZEuclidProp.
