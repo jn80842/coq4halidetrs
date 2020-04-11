@@ -771,13 +771,32 @@ Proof.
   assumption.
 Qed.
 
-Lemma mod_lt_denominator : forall a b, a mod b < abs b.
+Lemma mod_lt_denominator : forall a b, 0 < b -> a mod b < b.
 Proof.
-Admitted.
+  intros.
+  cut (a < b * (a/b + 1)).
+  intros.
+  rewrite mul_add_distr_l in H0.
+  rewrite mul_1_r in H0.
+  rewrite <- lt_sub_lt_add_l in H0.
+  rewrite <- mod_eq in H0.
+  assumption.
+  apply lt_neq_ooo.
+  assumption.
+  rewrite add_1_r.
+  apply mul_succ_div_gt.
+  assumption.
+Qed.
 
-Lemma mod_gt_z : forall a b, 0 <= a mod b.
+Lemma mod_gt_z : forall a b, b~= 0 -> 0 <= a mod b.
 Proof.
-Admitted.
+  intros.
+  rewrite mod_eq.
+  rewrite le_0_sub.
+  apply mul_div_le.
+  assumption.
+  assumption.
+Qed.
 
 Lemma pos_div_round_down_mod_z : forall a b, b > 0 -> a mod b == 0 -> a/b == (a + b - 1)/b.
 Proof.
